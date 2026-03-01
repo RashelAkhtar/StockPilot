@@ -2,8 +2,9 @@ import axios from "axios";
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-function LoginPage({ setUser }) {
+function RegisterPage({ setUser }) {
   const [form, setForm] = useState({
+    name: "",
     email: "",
     password: "",
   });
@@ -15,12 +16,12 @@ function LoginPage({ setUser }) {
     e.preventDefault();
     setError("");
     try {
-      const res = await axios.post(`${API}/api/auth/login`, form);
+      const res = await axios.post(`${API}/api/auth/register`, form);
 
       setUser(res.data.user);
       navigate("/");
-    } catch {
-      setError("Invalid email or password");
+    } catch (err) {
+      setError(err?.response?.data?.message || "Registration failed");
     }
   };
 
@@ -28,13 +29,24 @@ function LoginPage({ setUser }) {
     <div className="auth-page page">
       <div className="auth-card card">
         <form className="auth-form" onSubmit={handleSubmit}>
-          <h2 className="auth-title">Sign In</h2>
+          <h2 className="auth-title">Create Account</h2>
 
           {error && <p className="auth-error">{error}</p>}
 
-          <label htmlFor="login-email">Email</label>
+          <label htmlFor="register-name">Name</label>
           <input
-            id="login-email"
+            id="register-name"
+            className="input"
+            type="text"
+            placeholder="Enter your name"
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            required
+          />
+
+          <label htmlFor="register-email">Email</label>
+          <input
+            id="register-email"
             className="input"
             type="email"
             placeholder="Enter your email"
@@ -43,12 +55,12 @@ function LoginPage({ setUser }) {
             required
           />
 
-          <label htmlFor="login-password">Password</label>
+          <label htmlFor="register-password">Password</label>
           <input
-            id="login-password"
+            id="register-password"
             className="input"
             type="password"
-            placeholder="Enter your password"
+            placeholder="Create a password"
             value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}
             required
@@ -56,14 +68,14 @@ function LoginPage({ setUser }) {
 
           <div className="actions">
             <button className="btn primary auth-submit" type="submit">
-              Login
+              Register
             </button>
           </div>
 
           <p className="auth-switch">
-            New here?{" "}
-            <Link className="auth-link" to="/register">
-              Create an account
+            Already have an account?{" "}
+            <Link className="auth-link" to="/login">
+              Sign in
             </Link>
           </p>
         </form>
@@ -72,4 +84,4 @@ function LoginPage({ setUser }) {
   );
 }
 
-export default LoginPage;
+export default RegisterPage;

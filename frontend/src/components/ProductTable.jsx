@@ -1,5 +1,5 @@
 import {flexRender, getCoreRowModel, getPaginationRowModel, getSortedRowModel, useReactTable} from "@tanstack/react-table";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "../styles/ProductTable.css";
 import Modal from './Modal';
 
@@ -12,6 +12,8 @@ function ProductTable () {
     const [loading, setLoading] = useState(true);
     const [modal, setModal] = useState({ open: false, title: '', message: '' });
     const [sorting, setSorting] = useState([]);
+    const [searchInput, setSearchInput] = useState("");
+    const [search, setSearch] = useState("");
 
     // Fetch product
     const fetchProduct = async () => {
@@ -143,16 +145,46 @@ function ProductTable () {
         }
     }
 
+    // Debounce search input so we don't re-filter on every keystroke
+    useEffect(() => {
+        const handle = setTimeout(() => {
+            setSearch(searchInput.trim());
+        }, 250);
+        return () => clearTimeout(handle);
+    }, [searchInput]);
+
+    // Filtered data based on search term (product name)
+    const filteredData = useMemo(() => {
+        const term = search.trim().toLowerCase();
+        if (!term) return mergedData;
+        return mergedData.filter((row) => {
+            const name = String(row.productName || '').toLowerCase();
+            return name.includes(term);
+        });
+    }, [mergedData, search]);
+
     const columns = [
+        // Serial number column (1,2,3,...) that always follows the visible order
+        // This does NOT use the database id, only the row index from React Table.
         {
-            id: "id",
-            accessorKey: "id",
-            header: "ID",
+            id: "serial",
+            header: "S/N",
+            enableSorting: false,
             cell: (info) => {
-                const value = info.getValue();
-                return value !== null && value !== undefined ? String(value) : '';
-            }
+                const { pageIndex, pageSize } = info.table.getState().pagination;
+                // Global row number across pages
+                return pageIndex * pageSize + info.row.index + 1;
+            },
         },
+        // {
+        //     id: "id",
+        //     accessorKey: "id",
+        //     header: "ID",
+        //     cell: (info) => {
+        //         const value = info.getValue();
+        //         return value !== null && value !== undefined ? String(value) : '';
+        //     }
+        // },
         {
             id: "productName",
             accessorKey: "productName",
@@ -215,7 +247,7 @@ function ProductTable () {
     ];
 
     const table = useReactTable({
-        data: mergedData,
+        data: filteredData,
         columns,
         state: { sorting },
         onSortingChange: setSorting,
@@ -231,34 +263,48 @@ function ProductTable () {
         <div className="product-table page">
         <h2 className="page-title">Product Table</h2>
 
-        <div className="table-toolbar" style={{ display: 'flex', gap: 12, marginBottom: 12, alignItems: 'center' }}>
-            <label style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Sort by</label>
-            <select
-                value={sorting.length ? sorting[0].id : ''}
-                onChange={(e) => {
-                    const col = e.target.value;
-                    if (!col) {
-                        setSorting([]);
-                        return;
-                    }
-                    setSorting([{ id: col, desc: false }]);
-                }}
-                className="input"
-                style={{ width: 220 }}
-            >
-                <option value="">-- none --</option>
-                {columns.filter(c => c.id !== 'actions').map(c => (
-                    <option key={c.id} value={c.id}>{typeof c.header === 'string' ? c.header : c.id}</option>
-                ))}
-            </select>
+        <div className="table-toolbar" style={{ display: 'flex', gap: 12, marginBottom: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <label style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Sort by</label>
+                <select
+                    value={sorting.length ? sorting[0].id : ''}
+                    onChange={(e) => {
+                        const col = e.target.value;
+                        if (!col) {
+                            setSorting([]);
+                            return;
+                        }
+                        setSorting([{ id: col, desc: false }]);
+                    }}
+                    className="input"
+                    style={{ width: 220 }}
+                >
+                    <option value="">-- none --</option>
+                    {columns.filter(c => c.id !== 'actions' && c.id !== 'serial').map(c => (
+                        <option key={c.id} value={c.id}>{typeof c.header === 'string' ? c.header : c.id}</option>
+                    ))}
+                </select>
 
-            <button className="btn" onClick={() => {
-                if (!sorting.length) return;
-                const cur = sorting[0];
-                setSorting([{ id: cur.id, desc: !cur.desc }]);
-            }}>{sorting.length && sorting[0].desc ? 'Sort 🔽' : 'Sort 🔼'}</button>
+                <button className="btn" onClick={() => {
+                    if (!sorting.length) return;
+                    const cur = sorting[0];
+                    setSorting([{ id: cur.id, desc: !cur.desc }]);
+                }}>{sorting.length && sorting[0].desc ? 'Sort 🔽' : 'Sort 🔼'}</button>
 
-            <button className="btn" onClick={() => setSorting([])}>Clear</button>
+                <button className="btn" onClick={() => setSorting([])}>Clear</button>
+            </div>
+
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginLeft: 'auto' }}>
+                <label style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Search</label>
+                <input
+                    type="text"
+                    className="input"
+                    placeholder="Search by name..."
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    style={{ minWidth: 220 }}
+                />
+            </div>
         </div>
 
         <div className="table-wrapper">

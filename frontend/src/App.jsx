@@ -1,32 +1,59 @@
-import React from "react";
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import axios from "axios";
 import "./styles/App.css";
+import "./styles/Auth.css";
 
-import Header from './components/Header';
-import SummaryPage from './pages/SummaryPage';
-import ProductsPage from './pages/ProductsPage';
-import SalesPage from './pages/SalesPage';
-import LoginPage from './pages/LoginPage';
+import Header from "./components/Header";
+import SummaryPage from "./pages/SummaryPage";
+import ProductsPage from "./pages/ProductsPage";
+import SalesPage from "./pages/SalesPage";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import NotFound from "./components/NotFound";
 
-const isAuth = () => typeof window !== 'undefined' && localStorage.getItem('auth') === 'true';
-
-const Private = ({ children }) => {
-  if (!isAuth()) return <Navigate to="/login" replace />;
-  return children;
-};
+axios.defaults.withCredentials = true;
 
 function App() {
+  const API = import.meta.env.VITE_API || "http://localhost:3000";
+  const [user, setUser] = useState(null);
+  const [error] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await axios.get(`${API}/api/auth/me`);
+
+        setUser(res.data);
+      } catch {
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUser();
+  }, [API]);
+
+  if (loading) return <div className="loading">Loading...</div>;
 
   return (
     <BrowserRouter>
       <div className="app-container">
-        <Header />
+        <Header user={user} setUser={setUser} />
         <Routes>
-          <Route path="/" element={<Navigate to="/summary" replace />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/summary" element={<Private><SummaryPage /></Private>} />
-          <Route path="/products" element={<Private><ProductsPage /></Private>} />
-          <Route path="/sales" element={<Private><SalesPage /></Private>} />
+          <Route path="/" element={<SummaryPage user={user} error={error} />} />
+          <Route
+            path="/login"
+            element={user ? <Navigate to="/" /> : <LoginPage setUser={setUser} />}
+          />
+          <Route
+            path="/register"
+            element={user ? <Navigate to="/" /> : <RegisterPage setUser={setUser} />}
+          />
+          <Route path="/products" element={<ProductsPage user={user} error={error} />} />
+          <Route path="/sales" element={<SalesPage user={user} error={error} />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
     </BrowserRouter>
