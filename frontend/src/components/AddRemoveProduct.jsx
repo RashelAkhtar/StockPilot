@@ -17,7 +17,7 @@ function AddRemoveProduct() {
     useEffect(() => {
         const fetchProducts = async () => {
             try {
-                const res = await fetch(`${API}/api/product`);
+                const res = await fetch(`${API}/api/product`, { credentials: "include" });
                 const json = await res.json();
                 const rows = Array.isArray(json) ? json : json.data || [];
                 setProducts(rows);
@@ -53,6 +53,7 @@ function AddRemoveProduct() {
 
         const res = await fetch(`${API}/api/product`, {
             method: "POST",
+            credentials: "include",
             headers: {
                 "Content-Type": "application/json",
             },

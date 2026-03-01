@@ -18,7 +18,7 @@ function ProductTable () {
     // Fetch product
     const fetchProduct = async () => {
         try {
-            const res = await fetch(`${API}/api/product`);
+            const res = await fetch(`${API}/api/product`, { credentials: "include" });
             const json = await res.json();
 
             // backend returns rows with snake_case column names; map to frontend keys
@@ -41,7 +41,7 @@ function ProductTable () {
     // Fetch sold product info
     const fetchSoldDetails = async () => {
         try {
-            const res = await fetch(`${API}/api/sales`);
+            const res = await fetch(`${API}/api/sales`, { credentials: "include" });
             const json = await res.json();
 
             const rows = (Array.isArray(json) ? json: json.data || [])
@@ -125,6 +125,7 @@ function ProductTable () {
             console.log("Attempting delete for id:", id);
             const res = await fetch(`${API}/api/product/${id}`, {
                 method: "DELETE",
+                credentials: "include",
             });
 
             const json = await res.json().catch(() => ({}));

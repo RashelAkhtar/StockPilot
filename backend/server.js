@@ -8,6 +8,7 @@ import dashboardRouter from "./routes/dashboard.js";
 import productRouter from "./routes/product.js";
 import salesRouter from "./routes/sales.js";
 import authRouter from "./routes/auth.js";
+import { protect } from "./middleware/auth.js";
 
 // load .env located next to this file (backend/.env) so server works even when started from repo root
 const envPath = path.join(
@@ -38,9 +39,9 @@ app.get("/health", (req, res) => {
 });
 
 // API routes
-app.use("/api/dashboard", dashboardRouter);
-app.use("/api/product", productRouter);
-app.use("/api/sales", salesRouter);
+app.use("/api/dashboard", protect, dashboardRouter);
+app.use("/api/product", protect, productRouter);
+app.use("/api/sales", protect, salesRouter);
 app.use("/api/auth", authRouter);
 
 // 404 handler for undefined routes

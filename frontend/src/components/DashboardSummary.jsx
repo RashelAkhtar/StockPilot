@@ -47,11 +47,11 @@ function DashboardSummary () {
             try {
                 const qs = `?range=${encodeURIComponent(range)}`;
                 const [summaryRes, topRes, leastRes, salesRes, profitRes] = await Promise.all ([
-                    fetch(`${API}/api/dashboard/summary${qs}`),
-                    fetch(`${API}/api/dashboard/top-products${qs}`),
-                    fetch(`${API}/api/dashboard/least-products${qs}`),
-                    fetch(`${API}/api/dashboard/sales-trend${qs}`),
-                    fetch(`${API}/api/dashboard/profit-trend${qs}`),
+                    fetch(`${API}/api/dashboard/summary${qs}`, { credentials: "include" }),
+                    fetch(`${API}/api/dashboard/top-products${qs}`, { credentials: "include" }),
+                    fetch(`${API}/api/dashboard/least-products${qs}`, { credentials: "include" }),
+                    fetch(`${API}/api/dashboard/sales-trend${qs}`, { credentials: "include" }),
+                    fetch(`${API}/api/dashboard/profit-trend${qs}`, { credentials: "include" }),
                 ]);
 
                 if ( !summaryRes.ok || !topRes.ok || ! leastRes.ok || !salesRes.ok || !profitRes.ok) {

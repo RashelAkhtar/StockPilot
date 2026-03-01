@@ -21,7 +21,7 @@ function ProductSold () {
     useEffect(() => {
         const fetchProducts = async () => {
             try {
-                const res = await fetch(`${API}/api/product`);
+                const res = await fetch(`${API}/api/product`, { credentials: "include" });
                 const json = await res.json();
 
                 const rows = (Array.isArray(json) ? json : json.data || [])
@@ -115,6 +115,7 @@ function ProductSold () {
         try {
             const res = await fetch(`${API}/api/sales`, {
                 method: 'POST',
+                credentials: "include",
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
             });
