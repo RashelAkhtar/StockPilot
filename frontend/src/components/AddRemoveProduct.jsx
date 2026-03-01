@@ -10,7 +10,7 @@ function AddRemoveProduct() {
         buyingPrice: "",
         productQty: "",
     });
-    const [modal, setModal] = useState({ open: false, title: '', message: '' });
+    const [modal, setModal] = useState({ open: false, title: '', message: '', variant: 'success' });
     const [products, setProducts] = useState([]);
     const [suggestions, setSuggestions] = useState([]);
 
@@ -51,26 +51,41 @@ function AddRemoveProduct() {
             productQty: Number(form.productQty),
         };
 
-        const res = await fetch(`${API}/api/product`, {
-            method: "POST",
-            credentials: "include",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(payload),
-        });
+        try {
+            const res = await fetch(`${API}/api/product`, {
+                method: "POST",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(payload),
+            });
 
-        const data = await res.json();
+            const data = await res.json().catch(() => ({}));
 
-        if (res.ok) {
-            // notify listeners (ProductTable) to refresh
-            window.dispatchEvent(new CustomEvent("product:added", { detail: data.data }));
-            // reset form
-            setForm({ productName: "", buyingPrice: "", productQty: "" });
+            if (res.ok) {
+                // notify listeners (ProductTable) to refresh
+                window.dispatchEvent(new CustomEvent("product:added", { detail: data.data }));
+                // reset form
+                setForm({ productName: "", buyingPrice: "", productQty: "" });
+            }
+
+            // show modal with server response
+            setModal({
+                open: true,
+                title: res.ok ? "Success" : "Error",
+                message: data.message || (res.ok ? "Product added successfully" : "Failed to add product"),
+                variant: res.ok ? "success" : "error",
+            });
+        } catch (err) {
+            console.error(err);
+            setModal({
+                open: true,
+                title: "Error",
+                message: "Failed to add product",
+                variant: "error",
+            });
         }
-
-        // show modal with server response
-        setModal({ open: true, title: res.ok ? 'Success' : 'Error', message: data.message || (res.ok ? 'Product added' : 'Failed to add product') });
     }
 
 
@@ -110,7 +125,12 @@ function AddRemoveProduct() {
             </div>
 
                         {/* Product table is now on the Products page */}
-                        <Modal open={modal.open} title={modal.title} onClose={() => setModal({ open: false })}>
+                        <Modal
+                            open={modal.open}
+                            title={modal.title}
+                            variant={modal.variant}
+                            onClose={() => setModal((prev) => ({ ...prev, open: false }))}
+                        >
                             <div>{modal.message}</div>
                         </Modal>
         </div>

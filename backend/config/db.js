@@ -12,9 +12,9 @@ const pool = new Pool({
   // ssl: { rejectUnauthorized: false }
 });
 
-pool.on("connect", () => {
-  console.log("Connected to database");
-});
+// pool.on("connect", () => {
+//   console.log("Connected to database");
+// });
 
 pool.on("error", (err) => {
   console.error("Database Error", err);

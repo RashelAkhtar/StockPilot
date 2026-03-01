@@ -64,12 +64,23 @@
   background: var(--primary-gradient);
 }
 
+.modal-panel.modal-error .modal-header::after {
+  background: linear-gradient(135deg, var(--error) 0%, var(--error-light) 100%);
+}
+
 .modal-title {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 700;
   color: var(--text-primary);
   background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.modal-panel.modal-error .modal-title {
+  background: linear-gradient(135deg, var(--error) 0%, var(--error-light) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -105,6 +116,10 @@
   line-height: 1.6;
   overflow-y: auto;
   flex: 1;
+}
+
+.modal-panel.modal-error .modal-body {
+  color: var(--error);
 }
 
 .modal-actions {

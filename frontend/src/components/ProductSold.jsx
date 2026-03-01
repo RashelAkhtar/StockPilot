@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import ProductTable from "./ProductTable";
+import Modal from "./Modal";
 import "../styles/ProductSold.css";
 import "../styles/AddRemoveProduct.css"; // reuse typeahead styles
 
@@ -17,6 +18,7 @@ function ProductSold () {
     const [products, setProducts] = useState([]);
     const [suggestions, setSuggestions] = useState([]);
     const [activeIndex, setActiveIndex] = useState(-1);
+    const [modal, setModal] = useState({ open: false, title: "", message: "", variant: "success" });
 
     useEffect(() => {
         const fetchProducts = async () => {
@@ -97,7 +99,12 @@ function ProductSold () {
         e.preventDefault();
 
         if (!form.productId) {
-            alert('Please select a product');
+            setModal({
+                open: true,
+                title: "Warning",
+                message: "Please select a product",
+                variant: "error",
+            });
             return;
         }
 
@@ -108,7 +115,12 @@ function ProductSold () {
         };
 
         if (Number.isNaN(payload.sellingPrice) || Number.isNaN(payload.quantity)) {
-            alert('Please enter valid numeric selling price and quantity');
+            setModal({
+                open: true,
+                title: "Warning",
+                message: "Please enter valid numeric selling price and quantity",
+                variant: "error",
+            });
             return;
         }
 
@@ -123,7 +135,12 @@ function ProductSold () {
             const json = await res.json().catch(() => ({}));
 
             if (!res.ok) {
-                alert(json.error || 'Failed to record sale');
+                setModal({
+                    open: true,
+                    title: "Error",
+                    message: json.error || "Failed to record sale",
+                    variant: "error",
+                });
                 return;
             }
 
@@ -133,9 +150,20 @@ function ProductSold () {
 
             // reset form
             setForm({ productId: '', productName: '', buyingPrice: '', sellingPrice: '', productQty: '' });
+            setModal({
+                open: true,
+                title: "Success",
+                message: json.message || "Sale recorded successfully",
+                variant: "success",
+            });
         } catch (err) {
             console.error(err);
-            alert('Failed to record sale');
+            setModal({
+                open: true,
+                title: "Error",
+                message: "Failed to record sale",
+                variant: "error",
+            });
         }
     }
 
@@ -199,6 +227,15 @@ function ProductSold () {
             <div>
                 <ProductTable />
             </div>
+
+            <Modal
+                open={modal.open}
+                title={modal.title}
+                variant={modal.variant}
+                onClose={() => setModal((prev) => ({ ...prev, open: false }))}
+            >
+                <div>{modal.message}</div>
+            </Modal>
         </div>
     )
 }

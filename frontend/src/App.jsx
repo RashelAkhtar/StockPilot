@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import axios from "axios";
-import "./styles/App.css";
+import "./styles/Tokens.css";
+import "./styles/Base.css";
+import "./styles/UI.css";
+import "./styles/Animations.css";
 import "./styles/Auth.css";
 
 import Header from "./components/Header";

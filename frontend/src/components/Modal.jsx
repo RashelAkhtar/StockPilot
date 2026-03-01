@@ -1,12 +1,12 @@
 import React from 'react';
 import '../styles/Modal.css';
 
-export default function Modal({ open, title, children, onClose }) {
+export default function Modal({ open, title, children, onClose, variant = "success" }) {
   if (!open) return null;
 
   return (
     <div className="modal-backdrop" role="dialog" aria-modal="true">
-      <div className="modal-panel">
+      <div className={`modal-panel modal-${variant}`}>
         <div className="modal-header">
           <h3 className="modal-title">{title}</h3>
           <button className="modal-close" onClick={onClose} aria-label="Close">×</button>
