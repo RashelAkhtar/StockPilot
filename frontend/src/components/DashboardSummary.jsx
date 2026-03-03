@@ -88,10 +88,10 @@ function DashboardSummary () {
 
     // prepare chart data
     const salesLabels = salesTrend.map(r => r.date || r.month || r.label);
-    const salesValues = salesTrend.map(r => Number(r.total_sold ?? 0));
+    const salesValues = salesTrend.map(r => Number(r.value ?? r.total_sold ?? 0));
 
     const profitLabels = profitTrend.map(r => r.date || r.month || r.label);
-    const profitValues = profitTrend.map(r => Number(r.profit ?? r.month_profit ?? 0));
+    const profitValues = profitTrend.map(r => Number(r.value ?? r.profit ?? r.month_profit ?? 0));
 
     const topLabels = topProducts.map(p => p.product_name || p.productName);
     const topValues = topProducts.map(p => Number(p.total_sold ?? p.totalSold ?? 0));

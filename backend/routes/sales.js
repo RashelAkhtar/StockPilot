@@ -6,6 +6,7 @@ const router = express.Router();
 // Record a sale: insert into `sales` and decrement product quantity inside a transaction
 router.post("/", async (req, res) => {
     const { productId, sellingPrice, quantity } = req.body;
+    const userId = req.user.id;
 
     if (!productId || sellingPrice == null || quantity == null) {
         return res.status(400).json({ error: "Missing required fields" });
@@ -16,8 +17,8 @@ router.post("/", async (req, res) => {
         await client.query("BEGIN");
 
         const result = await client.query(
-            "SELECT id, buying_price, quantity FROM product_list WHERE id = $1 FOR UPDATE",
-            [productId]
+            "SELECT id, buying_price, quantity FROM product_list WHERE id = $1 AND user_id = $2 FOR UPDATE",
+            [productId, userId]
         );
 
         const product = result.rows[0];
@@ -36,23 +37,23 @@ router.post("/", async (req, res) => {
 
         // insert sale record (sales table must be created separately)
         const insertSale = await client.query(
-            `INSERT INTO sales (product_id, selling_price, quantity, profit_per_unit, total_profit)
-             VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-            [productId, sellingPrice, quantity, profitPerUnit, totalProfit]
+            `INSERT INTO sales (product_id, selling_price, quantity, profit_per_unit, total_profit, user_id)
+            VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+            [productId, sellingPrice, quantity, profitPerUnit, totalProfit, userId]
         );
 
         // decrement inventory; do not touch aggregate columns unless they exist
         await client.query(
-            "UPDATE product_list SET quantity = quantity - $1 WHERE id = $2",
-            [quantity, productId]
+            "UPDATE product_list SET quantity = quantity - $1 WHERE id = $2 ANS user_id = $3",
+            [quantity, productId, userId]
         );
 
         await client.query("COMMIT");
 
         // fetch updated product quantity to return to client
         const updated = await pool.query(
-            "SELECT id, product_name, buying_price, quantity FROM product_list WHERE id = $1",
-            [productId]
+            "SELECT id, product_name, buying_price, quantity FROM product_list WHERE id = $1 AND user_id = $2",
+            [productId, userId]
         );
 
         res.status(201).json({ message: "Sale recorded", sale: insertSale.rows[0], product: updated.rows[0] });
@@ -68,7 +69,8 @@ router.post("/", async (req, res) => {
 // GET sales list
 router.get("/", async (req, res) => {
     try {
-        const result = await pool.query("SELECT * FROM sales ORDER BY sold_at DESC");
+        const userId = req.user.id;
+        const result = await pool.query("SELECT * FROM sales WHERE user_id = $1 ORDER BY sold_at DESC", [userId]);
         // return rows directly (frontend accepts array or {data: []})
         res.json(result.rows);
     } catch (err) {
