@@ -30,12 +30,38 @@ router.post("/", async (req, res) => {
         const profitPerUnit = Number(sellingPrice) - Number(product.buying_price);
         const totalProfit = profitPerUnit * Number(quantity);
 
+
         // insert sale record (sales table must be created separately)
-        const insertSale = await pool.query(
+        let insertSale;
+        if (customersName && customersPhone) {
+            insertSale = await pool.query(
             `INSERT INTO sales (product_id, selling_price, quantity, profit_per_unit, total_profit, user_id, customers_name, customers_phone)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
             [productId, sellingPrice, quantity, profitPerUnit, totalProfit, userId, customersName, customersPhone]
         );
+        } 
+        else if (customersName) {
+            insertSale = await pool.query(
+            `INSERT INTO sales (product_id, selling_price, quantity, profit_per_unit, total_profit, user_id, customers_name)
+            VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+            [productId, sellingPrice, quantity, profitPerUnit, totalProfit, userId, customersName]
+            )
+        }
+        else if (customersPhone) {
+            insertSale = await pool.query(
+            `INSERT INTO sales (product_id, selling_price, quantity, profit_per_unit, total_profit, user_id, customers_phone)
+            VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+            [productId, sellingPrice, quantity, profitPerUnit, totalProfit, userId, customersPhone]
+            )
+        }
+        else {
+            insertSale = await pool.query(
+            `INSERT INTO sales (product_id, selling_price, quantity, profit_per_unit, total_profit, user_id)
+            VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+            [productId, sellingPrice, quantity, profitPerUnit, totalProfit, userId]
+            )
+        }
+        
 
         // decrement inventory; do not touch aggregate columns unless they exist
         await pool.query(
