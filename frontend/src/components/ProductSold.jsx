@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import ProductTable from "./ProductTable";
 import Modal from "./Modal";
 import "../styles/ProductSold.css";
@@ -199,6 +200,21 @@ function ProductSold() {
   };
 
   if (loading) return <p className="loading">Loading products...</p>;
+  if (products.length === 0) {
+    return (
+      <div className="product-sold page">
+        <div className="card" style={{ textAlign: "center", padding: "2rem 1.5rem" }}>
+          <h3 style={{ marginBottom: "0.5rem" }}>No sales recorded yet.</h3>
+          <p style={{ marginBottom: "1rem", color: "var(--text-secondary)" }}>
+            Start by recording your first product sale.
+          </p>
+          <Link className="btn primary" to="/products">
+            Go to Product Page
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="product-sold page">
