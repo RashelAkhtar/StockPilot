@@ -1,37 +1,27 @@
 .product-sold.page {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xl);
+  gap: var(--spacing-lg);
   animation: fadeIn 0.5s ease-out;
 }
 
 .product-sold .page-title {
+  margin: 0;
   font-size: 1.75rem;
   font-weight: 800;
-  margin-bottom: var(--spacing-lg);
   display: flex;
   align-items: center;
-  gap: var(--spacing-md);
-}
-
-.product-sold .page-title::before {
-  font-size: 1.5rem;
-  filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.3));
+  gap: var(--spacing-sm);
 }
 
 .product-sold .card {
+  width: 100%;
+  box-sizing: border-box;
   background: var(--bg-card);
   padding: var(--spacing-xl);
+  border: 1px solid var(--border);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-md);
-  margin-bottom: var(--spacing-lg);
-  border: 1px solid var(--border);
-  transition: all var(--transition-base);
-}
-
-.product-sold .card:hover {
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-2px);
 }
 
 .product-sold .form {
@@ -40,179 +30,163 @@
   gap: var(--spacing-lg);
 }
 
-.product-sold .form > div {
+.product-sold .input-field {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-lg);
+  align-items: start;
+}
+
+.product-sold .product-section,
+.product-sold .customer-section {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
+  gap: 0.55rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
 }
 
-.product-sold .form input[type="text"] {
-  width: 100%;
-  padding: 0.875rem 1.25rem;
-  border: 2px solid var(--border);
-  border-radius: var(--radius-md);
-  font-size: 0.9375rem;
-  transition: all var(--transition-base);
-  background: var(--bg-secondary);
+.product-sold .product-section {
+  background: linear-gradient(180deg, #e4fded 0%, #effef5 100%);
+}
+
+.product-sold .customer-section {
+  background: linear-gradient(180deg, #e0efff 0%, #eaf3fd 100%);
+}
+
+.product-sold .product-section > label:first-child,
+.product-sold .customer-section > label:first-child {
+  margin: 0 0 0.35rem;
+  font-size: 0.9rem;
+  letter-spacing: 0.03em;
   color: var(--text-primary);
-  font-family: inherit;
-  margin-bottom: 0;
-}
-
-.product-sold .form input[type="text"]:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 4px var(--primary-glow);
-  background: var(--bg-secondary);
-}
-
-.product-sold .form select {
-  width: 100%;
-  padding: 0.875rem 1.25rem;
-  padding-right: 2.5rem;
-  border: 2px solid var(--border);
-  border-radius: var(--radius-md);
-  font-size: 0.9375rem;
-  transition: all var(--transition-base);
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  font-family: inherit;
-  cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 1rem center;
-  background-color: var(--bg-secondary);
-}
-
-.product-sold .form select:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 4px var(--primary-glow);
-  background-color: var(--bg-secondary);
-}
-
-.product-sold .form select:hover {
-  border-color: var(--border-dark);
-  background-color: var(--bg-secondary);
 }
 
 .product-sold .form label {
-  font-weight: 600;
-  font-size: 0.9375rem;
-  color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
+  margin: 0.45rem 0 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-size: 0.8125rem;
-  margin-top: var(--spacing-sm);
+  color: var(--text-secondary);
 }
 
 .product-sold .form label::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: linear-gradient(to right, var(--border), transparent);
+  content: none;
 }
 
 .product-sold .input {
   width: 100%;
-  padding: 0.875rem 1.25rem;
+  margin: 0;
+  padding: 0.8rem 1rem;
   border: 2px solid var(--border);
   border-radius: var(--radius-md);
-  font-size: 0.9375rem;
-  transition: all var(--transition-base);
   background: var(--bg-secondary);
   color: var(--text-primary);
+  font-size: 0.94rem;
   font-family: inherit;
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
 }
 
 .product-sold .input:focus {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 4px var(--primary-glow);
-  background: var(--bg-secondary);
 }
 
-.product-sold .input::placeholder {
-  color: var(--text-muted);
+.product-sold .input:hover:not(:focus) {
+  border-color: var(--border-dark);
 }
 
-/* highlight disabled buying price specifically for ProductSold page */
-.product-sold .input[disabled]{
+.product-sold .input[disabled] {
   background: linear-gradient(90deg, var(--bg-secondary), rgba(59, 59, 59, 0.03));
   border-color: rgba(52, 52, 52, 0.18);
   color: var(--text-light);
   cursor: not-allowed;
 }
 
-.product-sold .input:hover:not(:focus) {
-  border-color: var(--border-dark);
-  background: var(--bg-secondary);
+.product-sold .typeahead {
+  position: relative;
+}
+
+.product-sold .suggestions {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  max-height: 220px;
+  margin: 0;
+  padding: 0.35rem 0;
+  overflow: auto;
+  list-style: none;
+  background: linear-gradient(180deg, var(--bg-secondary), var(--bg-tertiary));
+  border: 1px solid rgba(59, 130, 246, 0.1);
+  border-radius: 8px;
+  box-shadow: var(--shadow-md);
+}
+
+.product-sold .suggestions li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+}
+
+.product-sold .suggestions li:hover {
+  background: rgba(59, 130, 246, 0.06);
+}
+
+.product-sold .suggestions li.active {
+  background: var(--primary);
+  color: #fff;
+}
+
+.product-sold .muted {
+  color: var(--text-muted);
+  font-size: 0.85rem;
 }
 
 .product-sold .actions {
-  margin-top: var(--spacing-md);
   display: flex;
-  gap: var(--spacing-md);
   justify-content: flex-end;
+  margin-top: 0.25rem;
 }
 
 .product-sold .actions .btn {
-  padding: 0.875rem 2rem;
+  padding: 0.85rem 1.75rem;
+  border: 0;
   border-radius: var(--radius-md);
-  border: none;
   cursor: pointer;
-  font-weight: 600;
-  font-size: 0.9375rem;
-  transition: all var(--transition-base);
-  position: relative;
-  overflow: hidden;
+  font-size: 0.94rem;
+  font-weight: 700;
 }
 
 .product-sold .actions .btn.primary {
   background: linear-gradient(135deg, var(--success) 0%, var(--success-light) 100%);
-  color: white;
+  color: #fff;
   box-shadow: var(--shadow-md);
-}
-
-.product-sold .actions .btn.primary::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.3);
-  transform: translate(-50%, -50%);
-  transition: width 0.6s, height 0.6s;
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
 }
 
 .product-sold .actions .btn.primary:hover {
-  box-shadow: var(--shadow-lg), 0 0 20px var(--success-glow);
-  transform: translateY(-2px);
-}
-
-.product-sold .actions .btn.primary:hover::before {
-  width: 300px;
-  height: 300px;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lg);
 }
 
 .product-sold .loading {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: var(--spacing-md);
   padding: var(--spacing-2xl);
   color: var(--text-muted);
-  font-size: 1rem;
-  gap: var(--spacing-md);
 }
 
 .product-sold .loading::before {
-  content: '';
+  content: "";
   width: 1.5rem;
   height: 1.5rem;
   border: 3px solid var(--border);
@@ -221,25 +195,21 @@
   animation: spin 0.8s linear infinite;
 }
 
-/* Ensure table container is full width */
 .product-sold.page > div:last-child {
   width: 100%;
-  max-width: 100%;
+}
+
+@media (max-width: 900px) {
+  .product-sold .input-field {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 768px) {
-  .product-sold .page-title {
-    font-size: 1.5rem;
+  .product-sold .card {
+    padding: var(--spacing-lg);
   }
-  
-  .product-sold .form {
-    gap: var(--spacing-md);
-  }
-  
-  .product-sold .actions {
-    flex-direction: column;
-  }
-  
+
   .product-sold .actions .btn {
     width: 100%;
   }

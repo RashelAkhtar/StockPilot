@@ -5,30 +5,25 @@ const router = express.Router();
 
 // Record a sale: insert into `sales` and decrement product quantity inside a transaction
 router.post("/", async (req, res) => {
-    const { productId, sellingPrice, quantity } = req.body;
+    const { productId, sellingPrice, quantity, customersName, customersPhone } = req.body;
     const userId = req.user.id;
 
     if (!productId || sellingPrice == null || quantity == null) {
         return res.status(400).json({ error: "Missing required fields" });
     }
 
-    const client = await pool.connect();
     try {
-        await client.query("BEGIN");
-
-        const result = await client.query(
+        const result = await pool.query(
             "SELECT id, buying_price, quantity FROM product_list WHERE id = $1 AND user_id = $2 FOR UPDATE",
             [productId, userId]
         );
 
         const product = result.rows[0];
         if (!product) {
-            await client.query("ROLLBACK");
             return res.status(404).json({ error: "Product not found" });
         }
 
         if (Number(product.quantity) < Number(quantity)) {
-            await client.query("ROLLBACK");
             return res.status(400).json({ error: "Insufficient stock" });
         }
 
@@ -36,19 +31,17 @@ router.post("/", async (req, res) => {
         const totalProfit = profitPerUnit * Number(quantity);
 
         // insert sale record (sales table must be created separately)
-        const insertSale = await client.query(
-            `INSERT INTO sales (product_id, selling_price, quantity, profit_per_unit, total_profit, user_id)
-            VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-            [productId, sellingPrice, quantity, profitPerUnit, totalProfit, userId]
+        const insertSale = await pool.query(
+            `INSERT INTO sales (product_id, selling_price, quantity, profit_per_unit, total_profit, user_id, customers_name, customers_phone)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+            [productId, sellingPrice, quantity, profitPerUnit, totalProfit, userId, customersName, customersPhone]
         );
 
         // decrement inventory; do not touch aggregate columns unless they exist
-        await client.query(
-            "UPDATE product_list SET quantity = quantity - $1 WHERE id = $2 ANS user_id = $3",
+        await pool.query(
+            "UPDATE product_list SET quantity = quantity - $1 WHERE id = $2 AND user_id = $3",
             [quantity, productId, userId]
         );
-
-        await client.query("COMMIT");
 
         // fetch updated product quantity to return to client
         const updated = await pool.query(
@@ -58,11 +51,8 @@ router.post("/", async (req, res) => {
 
         res.status(201).json({ message: "Sale recorded", sale: insertSale.rows[0], product: updated.rows[0] });
     } catch (err) {
-        await client.query("ROLLBACK").catch(() => {});
         console.error(err);
         res.status(500).json({ error: "Failed to record sale" });
-    } finally {
-        client.release();
     }
 });
 
