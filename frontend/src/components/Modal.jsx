@@ -1,7 +1,17 @@
 import React from 'react';
 import '../styles/Modal.css';
 
-export default function Modal({ open, title, children, onClose, variant = "success" }) {
+export default function Modal({
+  open,
+  title,
+  children,
+  onClose,
+  variant = "success",
+  primaryLabel = "OK",
+  onPrimary,
+  secondaryLabel = "",
+  onSecondary,
+}) {
   if (!open) return null;
 
   return (
@@ -13,7 +23,14 @@ export default function Modal({ open, title, children, onClose, variant = "succe
         </div>
         <div className="modal-body">{children}</div>
         <div className="modal-actions">
-          <button className="btn primary" onClick={onClose}>OK</button>
+          {secondaryLabel ? (
+            <button className="btn secondary" onClick={onSecondary || onClose}>
+              {secondaryLabel}
+            </button>
+          ) : null}
+          <button className="btn primary" onClick={onPrimary || onClose}>
+            {primaryLabel}
+          </button>
         </div>
       </div>
     </div>

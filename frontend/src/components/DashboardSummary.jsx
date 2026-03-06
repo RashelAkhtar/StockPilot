@@ -137,6 +137,7 @@ function DashboardSummary() {
   const topValues = topProducts.map((p) =>
     Number(p.total_sold ?? p.totalSold ?? 0),
   );
+  const totalProfitValue = Number(summary?.total_profit ?? 0);
 
   return (
     <div className="dashboard-summary">
@@ -184,8 +185,8 @@ function DashboardSummary() {
 
         <div className="kpi card">
           <div className="kpi-title">Total Profit</div>
-          <div className="kpi-value">
-            ₹ {Number(summary?.total_profit ?? 0).toFixed(2)}
+          <div className={`kpi-value${totalProfitValue < 0 ? " is-negative" : ""}`}>
+            ₹ {totalProfitValue.toFixed(2)}
           </div>
         </div>
 

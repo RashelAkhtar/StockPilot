@@ -11,6 +11,7 @@ function ProductTable () {
     const [mergedData, setMergedData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [modal, setModal] = useState({ open: false, title: '', message: '' });
+    const [deleteModal, setDeleteModal] = useState({ open: false, id: null, productName: "" });
     const [sorting, setSorting] = useState([]);
     const [searchInput, setSearchInput] = useState("");
     const [search, setSearch] = useState("");
@@ -118,9 +119,6 @@ function ProductTable () {
 
     // DELETE product
     const handleDelete = async (id) => {
-        const confirmDelete = window.confirm("Are you sure you want to delete?");
-        if (!confirmDelete) return;
-
         try {
             console.log("Attempting delete for id:", id);
             const res = await fetch(`${API}/api/product/${id}`, {
@@ -145,6 +143,21 @@ function ProductTable () {
             console.error(err);
         }
     }
+
+    const openDeleteModal = (product) => {
+        setDeleteModal({
+            open: true,
+            id: product.id,
+            productName: product.productName || "this product",
+        });
+    };
+
+    const confirmDelete = async () => {
+        const id = deleteModal.id;
+        setDeleteModal({ open: false, id: null, productName: "" });
+        if (id == null) return;
+        await handleDelete(id);
+    };
 
     // Debounce search input so we don't re-filter on every keystroke
     useEffect(() => {
@@ -242,7 +255,7 @@ function ProductTable () {
             header: "Actions",
             enableSorting: false,
             cell: (info) => (
-                <button className="btn danger" onClick={() => handleDelete(info.row.original.id)}>DELETE</button>
+                <button className="btn danger" onClick={() => openDeleteModal(info.row.original)}>DELETE</button>
             )
         }
     ];
@@ -371,6 +384,21 @@ function ProductTable () {
       </div>
         <Modal open={modal.open} title={modal.title} onClose={() => setModal({ ...modal, open: false })}>
             <div>{modal.message}</div>
+        </Modal>
+        <Modal
+            open={deleteModal.open}
+            title="Delete Product"
+            variant="error"
+            primaryLabel="Delete"
+            secondaryLabel="Cancel"
+            onPrimary={confirmDelete}
+            onSecondary={() => setDeleteModal({ open: false, id: null, productName: "" })}
+            onClose={() => setDeleteModal({ open: false, id: null, productName: "" })}
+        >
+            <div>
+                Are you sure you want to delete <strong>{deleteModal.productName}</strong>?
+                This action cannot be undone.
+            </div>
         </Modal>
         </div>
     )
