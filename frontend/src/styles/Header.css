@@ -5,8 +5,9 @@
   padding: var(--spacing-lg) var(--spacing-xl);
   margin-bottom: var(--spacing-xl);
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
   gap: var(--spacing-lg);
   border: 1px solid var(--border);
   position: sticky;
@@ -15,6 +16,30 @@
   backdrop-filter: blur(10px);
   background: rgba(255, 255, 255, 0.9);
   animation: slideIn 0.5s ease-out;
+}
+
+.header-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-lg);
+}
+
+.stock-alert {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  border: 1px solid #f2b42c;
+  background: linear-gradient(180deg, #fff7dc 0%, #fff1bf 100%);
+  color: #8f5b00;
+  border-radius: var(--radius-md);
+  padding: 0.7rem 0.9rem;
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.stock-alert-icon {
+  font-size: 1rem;
 }
 
 .brand {
@@ -120,10 +145,13 @@
 
 @media (max-width: 768px) {
   .app-header {
-    flex-direction: column;
-    align-items: stretch;
     padding: var(--spacing-md);
     position: relative;
+  }
+
+  .header-main {
+    flex-direction: column;
+    align-items: stretch;
   }
   
   .brand {
