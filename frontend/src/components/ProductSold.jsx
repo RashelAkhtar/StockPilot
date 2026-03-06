@@ -444,7 +444,6 @@ function ProductSold() {
                 onChange={handleChange}
                 placeholder="Enter selling price..."
                 value={form.sellingPrice}
-                required
               />
 
               <label>Quantity</label>
@@ -455,7 +454,6 @@ function ProductSold() {
                 onChange={handleChange}
                 placeholder="Enter quantity..."
                 value={form.productQty}
-                required
               />
             </div>
           </div>

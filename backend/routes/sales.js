@@ -141,4 +141,48 @@ router.get("/", async (req, res) => {
   }
 });
 
+// GET order history with customer + items details
+router.get("/history", async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const result = await pool.query(
+      `
+        SELECT
+          o.id AS order_id,
+          o.customers_name,
+          o.customers_phone,
+          o.created_at,
+          COALESCE(SUM(oi.quantity), 0)::int AS total_products,
+          COALESCE(SUM(oi.total_profit), 0)::numeric AS order_profit,
+          COALESCE(
+            json_agg(
+              json_build_object(
+                'productId', p.id,
+                'productName', p.product_name,
+                'quantity', oi.quantity,
+                'sellingPrice', oi.selling_price,
+                'profitPerUnit', oi.profit_per_unit,
+                'totalProfit', oi.total_profit
+              )
+              ORDER BY oi.id
+            ) FILTER (WHERE oi.id IS NOT NULL),
+            '[]'::json
+          ) AS items
+        FROM orders o
+        LEFT JOIN order_items oi ON oi.order_id = o.id
+        LEFT JOIN product_list p ON p.id = oi.product_id
+        WHERE o.user_id = $1
+        GROUP BY o.id, o.customers_name, o.customers_phone, o.created_at
+        ORDER BY o.created_at DESC, o.id DESC
+      `,
+      [userId],
+    );
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch order history" });
+  }
+});
+
 export default router;

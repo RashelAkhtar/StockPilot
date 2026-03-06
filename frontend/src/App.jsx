@@ -11,9 +11,11 @@ import Header from "./components/Header";
 import SummaryPage from "./pages/SummaryPage";
 import ProductsPage from "./pages/ProductsPage";
 import SalesPage from "./pages/SalesPage";
+import HistoryPage from "./pages/HistoryPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import NotFound from "./components/NotFound";
+import "./styles/HistoryTable.css";
 
 axios.defaults.withCredentials = true;
 
@@ -56,6 +58,7 @@ function App() {
           />
           <Route path="/products" element={<ProductsPage user={user} error={error} />} />
           <Route path="/sales" element={<SalesPage user={user} error={error} />} />
+          <Route path="/history" element={<HistoryPage user={user} error={error} />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>

@@ -34,6 +34,9 @@ function Header({ user, setUser }) {
             <NavLink to="/sales" className={({ isActive }) => (isActive ? "btn active" : "btn")}>
               Record Sales
             </NavLink>
+            <NavLink to="/history" className={({ isActive }) => (isActive ? "btn active" : "btn")}>
+              History
+            </NavLink>
             <button className="btn" onClick={handleLogOut}>
               Logout
             </button>
