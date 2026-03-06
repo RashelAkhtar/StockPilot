@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import ProductTable from "./ProductTable";
 import Modal from "./Modal";
@@ -16,6 +16,7 @@ function ProductSold() {
     customersName: "",
     customersPhone: "",
   });
+  const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
@@ -37,10 +38,10 @@ function ProductSold() {
 
         const rows = (Array.isArray(json) ? json : json.data || []).map(
           (r) => ({
-            id: r.id,
+            id: Number(r.id),
             productName: r.product_name ?? r.productName,
-            buyingPrice: r.buying_price ?? r.buyingPrice,
-            productQty: r.quantity ?? r.productQty,
+            buyingPrice: Number(r.buying_price ?? r.buyingPrice ?? 0),
+            productQty: Number(r.quantity ?? r.productQty ?? 0),
           }),
         );
 
@@ -55,10 +56,129 @@ function ProductSold() {
     fetchProducts();
   }, [API]);
 
+  const inventoryMap = useMemo(() => {
+    const map = new Map();
+    for (const p of products) map.set(Number(p.id), p);
+    return map;
+  }, [products]);
+
+  const getCartQtyForProduct = (productId) =>
+    cart
+      .filter((item) => Number(item.productId) === Number(productId))
+      .reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+
+  const resetProductSelection = () => {
+    setForm((prev) => ({
+      ...prev,
+      productId: "",
+      productName: "",
+      buyingPrice: "",
+      sellingPrice: "",
+      productQty: "",
+    }));
+    setSuggestions([]);
+    setActiveIndex(-1);
+  };
+
+  const addToCart = () => {
+    const productId = Number(form.productId);
+    const sellingPrice = Number(form.sellingPrice);
+    const quantity = Number(form.productQty);
+
+    if (!Number.isInteger(productId) || productId <= 0) {
+      setModal({
+        open: true,
+        title: "Warning",
+        message: "Please select a product",
+        variant: "error",
+      });
+      return;
+    }
+
+    if (!Number.isFinite(sellingPrice) || sellingPrice < 0) {
+      setModal({
+        open: true,
+        title: "Warning",
+        message: "Please enter a valid selling price",
+        variant: "error",
+      });
+      return;
+    }
+
+    if (!Number.isInteger(quantity) || quantity <= 0) {
+      setModal({
+        open: true,
+        title: "Warning",
+        message: "Quantity must be a whole number greater than 0",
+        variant: "error",
+      });
+      return;
+    }
+
+    const selectedProduct = inventoryMap.get(productId);
+    if (!selectedProduct) {
+      setModal({
+        open: true,
+        title: "Error",
+        message: "Selected product is not available",
+        variant: "error",
+      });
+      return;
+    }
+
+    const alreadyInCart = getCartQtyForProduct(productId);
+    const availableStock = Number(selectedProduct.productQty || 0);
+    if (alreadyInCart + quantity > availableStock) {
+      setModal({
+        open: true,
+        title: "Stock limit",
+        message: `Only ${availableStock - alreadyInCart} more unit(s) can be added for ${selectedProduct.productName}.`,
+        variant: "error",
+      });
+      return;
+    }
+
+    setCart((prev) => {
+      const idx = prev.findIndex(
+        (item) => Number(item.productId) === productId,
+      );
+      if (idx === -1) {
+        return [
+          ...prev,
+          {
+            productId,
+            productName: selectedProduct.productName,
+            buyingPrice: Number(selectedProduct.buyingPrice || 0),
+            sellingPrice,
+            quantity,
+          },
+        ];
+      }
+
+      const next = [...prev];
+      next[idx] = {
+        ...next[idx],
+        quantity: Number(next[idx].quantity) + quantity,
+        sellingPrice,
+      };
+      return next;
+    });
+
+    resetProductSelection();
+  };
+
+  const removeCartItem = (productId) => {
+    setCart((prev) =>
+      prev.filter((item) => Number(item.productId) !== Number(productId)),
+    );
+  };
+
+  const clearCart = () => setCart([]);
+
   const handleChange = (e) => {
     const name = e.target.name;
     const value = e.target.value;
-    setForm({ ...form, [name]: value });
+    setForm((prev) => ({ ...prev, [name]: value }));
 
     if (name === "productName") {
       const q = String(value || "").toLowerCase();
@@ -68,9 +188,7 @@ function ProductSold() {
         return;
       }
       const matches = products
-        .filter((p) =>
-          (p.productName || p.product_name || "").toLowerCase().includes(q),
-        )
+        .filter((p) => (p.productName || "").toLowerCase().includes(q))
         .slice(0, 8);
       setSuggestions(matches);
       setActiveIndex(matches.length ? 0 : -1);
@@ -78,12 +196,12 @@ function ProductSold() {
   };
 
   const selectSuggestion = (s) => {
-    setForm({
-      ...form,
+    setForm((prev) => ({
+      ...prev,
       productId: s.id,
       productName: s.productName,
       buyingPrice: s.buyingPrice,
-    });
+    }));
     setSuggestions([]);
     setActiveIndex(-1);
   };
@@ -114,36 +232,43 @@ function ProductSold() {
     }
   };
 
+  const cartTotals = useMemo(() => {
+    return cart.reduce(
+      (acc, item) => {
+        const qty = Number(item.quantity || 0);
+        const buy = Number(item.buyingPrice || 0);
+        const sell = Number(item.sellingPrice || 0);
+        acc.units += qty;
+        acc.revenue += sell * qty;
+        acc.profit += (sell - buy) * qty;
+        return acc;
+      },
+      { units: 0, revenue: 0, profit: 0 },
+    );
+  }, [cart]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!form.productId) {
+    if (!cart.length) {
       setModal({
         open: true,
         title: "Warning",
-        message: "Please select a product",
+        message: "Cart is empty. Add at least one product.",
         variant: "error",
       });
       return;
     }
 
     const payload = {
-      productId: form.productId,
-      sellingPrice: Number(form.sellingPrice),
-      quantity: Number(form.productQty),
-      customersName: form.customersName,
-      customersPhone: form.customersPhone,
+      customersName: form.customersName?.trim() || null,
+      customersPhone: form.customersPhone?.trim() || null,
+      items: cart.map((item) => ({
+        productId: Number(item.productId),
+        sellingPrice: Number(item.sellingPrice),
+        quantity: Number(item.quantity),
+      })),
     };
-
-    if (Number.isNaN(payload.sellingPrice) || Number.isNaN(payload.quantity)) {
-      setModal({
-        open: true,
-        title: "Warning",
-        message: "Please enter valid numeric selling price and quantity",
-        variant: "error",
-      });
-      return;
-    }
 
     try {
       const res = await fetch(`${API}/api/sales`, {
@@ -159,20 +284,36 @@ function ProductSold() {
         setModal({
           open: true,
           title: "Error",
-          message: json.error || "Failed to record sale",
+          message: json.error || "Failed to record order",
           variant: "error",
         });
         return;
       }
 
-      // notify product table to refresh quantities
-      window.dispatchEvent(
-        new CustomEvent("product:sold", {
-          detail: { productId: payload.productId },
-        }),
-      );
+      window.dispatchEvent(new CustomEvent("product:sold"));
 
-      // reset form
+      // Update local stock snapshot so the user can continue adding orders without refresh.
+      setProducts((prev) => {
+        const soldById = new Map();
+        for (const item of payload.items) {
+          soldById.set(
+            item.productId,
+            Number(soldById.get(item.productId) || 0) +
+              Number(item.quantity || 0),
+          );
+        }
+
+        return prev.map((p) => {
+          const sold = Number(soldById.get(Number(p.id)) || 0);
+          if (!sold) return p;
+          return {
+            ...p,
+            productQty: Math.max(0, Number(p.productQty || 0) - sold),
+          };
+        });
+      });
+
+      setCart([]);
       setForm({
         productId: "",
         productName: "",
@@ -185,7 +326,7 @@ function ProductSold() {
       setModal({
         open: true,
         title: "Success",
-        message: json.message || "Sale recorded successfully",
+        message: json.message || "Order recorded successfully",
         variant: "success",
       });
     } catch (err) {
@@ -193,7 +334,7 @@ function ProductSold() {
       setModal({
         open: true,
         title: "Error",
-        message: "Failed to record sale",
+        message: "Failed to record order",
         variant: "error",
       });
     }
@@ -203,7 +344,10 @@ function ProductSold() {
   if (products.length === 0) {
     return (
       <div className="product-sold page">
-        <div className="card" style={{ textAlign: "center", padding: "2rem 1.5rem" }}>
+        <div
+          className="card"
+          style={{ textAlign: "center", padding: "2rem 1.5rem" }}
+        >
           <h3 style={{ marginBottom: "0.5rem" }}>No sales recorded yet.</h3>
           <p style={{ marginBottom: "1rem", color: "var(--text-secondary)" }}>
             Start by recording your first product sale.
@@ -223,7 +367,30 @@ function ProductSold() {
       <div className="card">
         <form className="form" onSubmit={handleSubmit}>
           <div className="input-field">
-            {/* Product Section */}
+            <div className="customer-section">
+              <label>Customer Details</label>
+
+              <label>Customer's name</label>
+              <input
+                className="input"
+                type="text"
+                name="customersName"
+                placeholder="Customer's name..."
+                onChange={handleChange}
+                value={form.customersName}
+              />
+
+              <label>Customer's Phone No</label>
+              <input
+                className="input"
+                type="number"
+                name="customersPhone"
+                placeholder="Customer's Phone No..."
+                onChange={handleChange}
+                value={form.customersPhone}
+              />
+            </div>
+
             <div className="product-section">
               <label>Product Details</label>
               <div className="typeahead">
@@ -249,8 +416,10 @@ function ProductSold() {
                         onMouseEnter={() => setActiveIndex(idx)}
                         onClick={() => selectSuggestion(s)}
                       >
-                        {s.productName}{" "}
-                        <span className="muted">(₹{s.buyingPrice})</span>
+                        {s.productName}
+                        <span className="muted">
+                          (Buy: ₹{s.buyingPrice}, Stock: {s.productQty})
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -289,36 +458,71 @@ function ProductSold() {
                 required
               />
             </div>
-
-            {/* Customer Section */}
-            <div className="customer-section">
-              <label>Customer Details</label>
-
-              <label>Customer's name</label>
-              <input
-                className="input"
-                type="text"
-                name="customersName"
-                placeholder="Customer's name..."
-                onChange={handleChange}
-                value={form.customersName}
-              />
-
-              <label>Customer's Phone No</label>
-              <input
-                className="input"
-                type="number"
-                name="customersPhone"
-                placeholder="Customer's Phone No..."
-                onChange={handleChange}
-                value={form.customersPhone}
-              />
-            </div>
           </div>
 
           <div className="actions">
-            <button className="btn primary" type="submit">
-              Record Sale
+            <button className="btn" type="button" onClick={addToCart}>
+              Add Product
+            </button>
+          </div>
+
+          <div className="cart-preview">
+            <div className="cart-header-row">
+              <h3>Cart Items ({cart.length})</h3>
+              <button
+                className="btn danger"
+                type="button"
+                onClick={clearCart}
+                disabled={!cart.length}
+              >
+                Clear Cart
+              </button>
+            </div>
+
+            {cart.length === 0 ? (
+              <p className="cart-empty">No product added yet.</p>
+            ) : (
+              <>
+                <ul className="cart-list">
+                  {cart.map((item) => (
+                    <li key={item.productId} className="cart-item">
+                      <div>
+                        <strong>{item.productName}</strong>
+                        <p>
+                          Qty: {item.quantity} | Sell: ₹{item.sellingPrice} |
+                          Profit/Unit: ₹
+                          {(
+                            Number(item.sellingPrice) - Number(item.buyingPrice)
+                          ).toFixed(2)}
+                        </p>
+                      </div>
+                      <button
+                        className="btn danger"
+                        type="button"
+                        onClick={() => removeCartItem(item.productId)}
+                      >
+                        Remove
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="cart-summary">
+                  <span>Total Units: {cartTotals.units}</span>
+                  <span>Revenue: ₹{cartTotals.revenue.toFixed(2)}</span>
+                  <span>Profit: ₹{cartTotals.profit.toFixed(2)}</span>
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="actions">
+            <button
+              className="btn primary"
+              type="submit"
+              disabled={!cart.length}
+            >
+              Record Order
             </button>
           </div>
         </form>

@@ -163,9 +163,9 @@ function DashboardSummary() {
           ))}
         </div>
       </div>
-      <div className="summary-header">
+      {/* <div className="summary-header">
         <h2>Business Summary</h2>
-      </div>
+      </div> */}
 
       <div className="kpi-grid">
         <div className="kpi card">
