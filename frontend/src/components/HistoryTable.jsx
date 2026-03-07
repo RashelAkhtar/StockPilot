@@ -7,6 +7,15 @@ function HistoryTable() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  const numberFormatter = useMemo(() => new Intl.NumberFormat("en-IN"), []);
+  const moneyFormatter = useMemo(
+    () =>
+      new Intl.NumberFormat("en-IN", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
+    [],
+  );
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -98,15 +107,26 @@ function HistoryTable() {
                 {row.items.map((item, idx) => (
                   <li key={`${row.orderId}-${idx}`}>
                     <span>{item.productName}</span>
-                    <span>Qty: {item.quantity}</span>
-                    <span>Profit: ₹{item.totalProfit.toFixed(2)}</span>
+                    <span>
+                      Qty: {numberFormatter.format(Number(item.quantity || 0))}
+                    </span>
+                    <span>
+                      Profit: ₹
+                      {moneyFormatter.format(Number(item.totalProfit || 0))}
+                    </span>
                   </li>
                 ))}
               </ul>
 
               <div className="history-totals">
-                <span>Total Products: {row.totalProducts}</span>
-                <span>Order Profit: ₹{row.orderProfit.toFixed(2)}</span>
+                <span>
+                  Total Products:{" "}
+                  {numberFormatter.format(Number(row.totalProducts || 0))}
+                </span>
+                <span>
+                  Order Profit: ₹
+                  {moneyFormatter.format(Number(row.orderProfit || 0))}
+                </span>
               </div>
             </article>
           ))}

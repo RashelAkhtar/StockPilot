@@ -3,28 +3,45 @@ import pool from "../config/db.js";
 
 const router = express.Router();
 
+const parseLooseNumber = (value) => {
+  if (value === null || value === undefined) return NaN;
+  const normalized = String(value).replace(/,/g, "").trim();
+  if (!normalized) return NaN;
+  return Number(normalized);
+};
+
+// ACID safe
 router.post("/", async (req, res) => {
+  const client = await pool.connect();
+
   try {
     const userId = req.user.id;
     const { customersName = null, customersPhone = null } = req.body;
 
     // Accept new cart payload (`items`) and keep backward compatibility
     // with older single-product payload shape.
-    const items = Array.isArray(req.body.items) && req.body.items.length
-      ? req.body.items
-      : (req.body.productId
-          ? [{
-              productId: req.body.productId,
-              sellingPrice: req.body.sellingPrice,
-              quantity: req.body.quantity,
-            }]
-          : []);
+    const items =
+      Array.isArray(req.body.items) && req.body.items.length
+        ? req.body.items
+        : req.body.productId
+          ? [
+              {
+                productId: req.body.productId,
+                sellingPrice: req.body.sellingPrice,
+                quantity: req.body.quantity,
+              },
+            ]
+          : [];
 
     if (!items.length) {
-      return res.status(400).json({ error: "At least one cart item is required" });
+      return res
+        .status(400)
+        .json({ error: "At least one cart item is required" });
     }
 
-    const orderInsert = await pool.query(
+    await client.query("BEGIN");
+
+    const orderInsert = await client.query(
       `INSERT INTO orders (user_id, customers_name, customers_phone)
        VALUES ($1, $2, $3)
        RETURNING id`,
@@ -36,8 +53,8 @@ router.post("/", async (req, res) => {
 
     for (const item of items) {
       const productId = Number(item.productId);
-      const sellingPrice = Number(item.sellingPrice);
-      const quantity = Number(item.quantity);
+      const sellingPrice = parseLooseNumber(item.sellingPrice);
+      const quantity = parseLooseNumber(item.quantity);
 
       if (!Number.isInteger(productId) || productId <= 0) {
         throw new Error("Invalid product id in cart");
@@ -49,7 +66,7 @@ router.post("/", async (req, res) => {
         throw new Error("Invalid quantity in cart");
       }
 
-      const productResult = await pool.query(
+      const productResult = await client.query(
         `SELECT id, buying_price, quantity
          FROM product_list
          WHERE id = $1 AND user_id = $2
@@ -59,27 +76,31 @@ router.post("/", async (req, res) => {
 
       const product = productResult.rows[0];
 
-      if (!product) {
-        throw new Error(`Product ${productId} not found`);
-      }
-      if (Number(product.quantity) < quantity) {
+      if (!product) throw new Error(`Product ${productId} not found`);
+      if (Number(product.quantity) < quantity)
         throw new Error(`Insufficient stock for product ${productId}`);
-      }
 
       const buyingPrice = Number(product.buying_price);
       const profitPerUnit = sellingPrice - buyingPrice;
       const totalProfit = profitPerUnit * quantity;
 
-      await pool.query(
+      await client.query(
         `INSERT INTO order_items
          (order_id, product_id, selling_price, quantity, profit_per_unit, total_profit)
          VALUES ($1, $2, $3, $4, $5, $6)`,
-        [orderId, productId, sellingPrice, quantity, profitPerUnit, totalProfit],
+        [
+          orderId,
+          productId,
+          sellingPrice,
+          quantity,
+          profitPerUnit,
+          totalProfit,
+        ],
       );
 
       // Keep the existing sales table in sync so existing dashboard/table APIs
       // continue to work without additional migrations.
-      await pool.query(
+      await client.query(
         `INSERT INTO sales
          (user_id, product_id, selling_price, quantity, profit_per_unit, total_profit, customers_name, customers_phone)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
@@ -95,7 +116,7 @@ router.post("/", async (req, res) => {
         ],
       );
 
-      await pool.query(
+      await client.query(
         `UPDATE product_list
          SET
            quantity = quantity - $1,
@@ -115,13 +136,19 @@ router.post("/", async (req, res) => {
       });
     }
 
+    await client.query("COMMIT");
+
     res.status(201).json({
       message: "Order recorded",
       orderId,
       items: processedItems,
     });
   } catch (err) {
+    await client.query("ROLLBACK");
     res.status(500).json({ error: err.message || "Failed to record order" });
+  } finally {
+    // Release connection back to pool
+    client.release();
   }
 });
 

@@ -42,6 +42,18 @@ function DashboardSummary() {
   const [profitTrend, setProfitTrend] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const numberFormatter = React.useMemo(
+    () => new Intl.NumberFormat("en-IN"),
+    [],
+  );
+  const moneyFormatter = React.useMemo(
+    () =>
+      new Intl.NumberFormat("en-IN", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
+    [],
+  );
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -172,32 +184,36 @@ function DashboardSummary() {
         <div className="kpi card">
           <div className="kpi-title">Total in Store</div>
           <div className="kpi-value">
-            ₹ {Number(summary?.inventory_value ?? 0).toFixed(2)}
+            ₹ {moneyFormatter.format(Number(summary?.inventory_value ?? 0))}
           </div>
         </div>
 
         <div className="kpi card">
           <div className="kpi-title">Total Revenue</div>
           <div className="kpi-value">
-            ₹ {Number(summary?.total_revenue ?? 0).toFixed(2)}
+            ₹ {moneyFormatter.format(Number(summary?.total_revenue ?? 0))}
           </div>
         </div>
 
         <div className="kpi card">
           <div className="kpi-title">Total Profit</div>
           <div className={`kpi-value${totalProfitValue < 0 ? " is-negative" : ""}`}>
-            ₹ {totalProfitValue.toFixed(2)}
+            ₹ {moneyFormatter.format(totalProfitValue)}
           </div>
         </div>
 
         <div className="kpi card">
           <div className="kpi-title">Total Units Sold</div>
-          <div className="kpi-value">{summary?.total_sold ?? 0}</div>
+          <div className="kpi-value">
+            {numberFormatter.format(Number(summary?.total_sold ?? 0))}
+          </div>
         </div>
 
         <div className="kpi card">
           <div className="kpi-title">Total Products</div>
-          <div className="kpi-value">{summary?.total_products ?? 0}</div>
+          <div className="kpi-value">
+            {numberFormatter.format(Number(summary?.total_products ?? 0))}
+          </div>
         </div>
       </div>
 
@@ -278,7 +294,7 @@ function DashboardSummary() {
               {leastProducts.map((p) => (
                 <tr key={p.id}>
                   <td>{p.product_name}</td>
-                  <td>{p.total_sold}</td>
+                  <td>{numberFormatter.format(Number(p.total_sold ?? 0))}</td>
                 </tr>
               ))}
             </tbody>

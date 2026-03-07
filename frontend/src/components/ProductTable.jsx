@@ -5,6 +5,15 @@ import Modal from './Modal';
 
 function ProductTable () {
     const API = import.meta.env.VITE_API;
+    const numberFormatter = useMemo(() => new Intl.NumberFormat("en-IN"), []);
+    const moneyFormatter = useMemo(
+        () =>
+            new Intl.NumberFormat("en-IN", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+            }),
+        [],
+    );
 
     const [data, setData] = useState([]);
     const [soldData, setSoldData] = useState([]);
@@ -211,7 +220,7 @@ function ProductTable () {
             header: "Buying Price",
             cell: (info) => {
                 const value = info.getValue();
-                return value !== null && value !== undefined ? value : 0;
+                return moneyFormatter.format(Number(value ?? 0));
             }
         },
         {
@@ -220,7 +229,7 @@ function ProductTable () {
             header: "Quantity",
             cell: (info) => {
                 const value = info.getValue();
-                return value !== null && value !== undefined ? value : 0;
+                return numberFormatter.format(Number(value ?? 0));
             }
         },
         {
@@ -229,7 +238,9 @@ function ProductTable () {
             header: "Profit Per Unit",
             cell: (info) => {
                 const value = info.getValue();
-                return value !== null && value !== undefined && value !== '' ? value : '-';
+                return value !== null && value !== undefined && value !== ''
+                    ? moneyFormatter.format(Number(value))
+                    : '-';
             }
         },
         {
@@ -238,7 +249,7 @@ function ProductTable () {
             header: "Quantity Sold",
             cell: (info) => {
                 const value = info.getValue();
-                return value !== null && value !== undefined ? value : 0;
+                return numberFormatter.format(Number(value ?? 0));
             }
         },
         {
@@ -247,7 +258,7 @@ function ProductTable () {
             header: "Total Profit",
             cell: (info) => {
                 const value = info.getValue();
-                return value !== null && value !== undefined ? value : 0;
+                return moneyFormatter.format(Number(value ?? 0));
             }
         },
         {

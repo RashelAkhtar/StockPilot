@@ -7,6 +7,13 @@ import "../styles/ProductSold.css";
 function ProductSold() {
   const API = import.meta.env.VITE_API;
 
+  const parseLooseNumber = (value) => {
+    if (value === null || value === undefined) return NaN;
+    const normalized = String(value).replace(/,/g, "").trim();
+    if (!normalized) return NaN;
+    return Number(normalized);
+  };
+
   const [form, setForm] = useState({
     productId: "",
     productName: "",
@@ -82,8 +89,8 @@ function ProductSold() {
 
   const addToCart = () => {
     const productId = Number(form.productId);
-    const sellingPrice = Number(form.sellingPrice);
-    const quantity = Number(form.productQty);
+    const sellingPrice = parseLooseNumber(form.sellingPrice);
+    const quantity = parseLooseNumber(form.productQty);
 
     if (!Number.isInteger(productId) || productId <= 0) {
       setModal({
@@ -439,7 +446,8 @@ function ProductSold() {
               <label>Selling Price (per unit)</label>
               <input
                 className="input"
-                type="number"
+                type="text"
+                inputMode="decimal"
                 name="sellingPrice"
                 onChange={handleChange}
                 placeholder="Enter selling price..."
@@ -449,7 +457,8 @@ function ProductSold() {
               <label>Quantity</label>
               <input
                 className="input"
-                type="number"
+                type="text"
+                inputMode="numeric"
                 name="productQty"
                 onChange={handleChange}
                 placeholder="Enter quantity..."

@@ -4,6 +4,12 @@ import Modal from './Modal';
 
 function AddRemoveProduct() {
     const API = import.meta.env.VITE_API;
+    const parseLooseNumber = (value) => {
+        if (value === null || value === undefined) return NaN;
+        const normalized = String(value).replace(/,/g, "").trim();
+        if (!normalized) return NaN;
+        return Number(normalized);
+    };
 
     const [form, setForm] = useState({
         productName: "",
@@ -45,10 +51,33 @@ function AddRemoveProduct() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         // coerce numeric fields to numbers before sending
+        const buyingPrice = parseLooseNumber(form.buyingPrice);
+        const productQty = parseLooseNumber(form.productQty);
+
+        if (!Number.isFinite(buyingPrice) || buyingPrice < 0) {
+            setModal({
+                open: true,
+                title: "Warning",
+                message: "Please enter a valid buying price",
+                variant: "error",
+            });
+            return;
+        }
+
+        if (!Number.isInteger(productQty) || productQty <= 0) {
+            setModal({
+                open: true,
+                title: "Warning",
+                message: "Quantity must be a whole number greater than 0",
+                variant: "error",
+            });
+            return;
+        }
+
         const payload = {
             productName: form.productName,
-            buyingPrice: Number(form.buyingPrice),
-            productQty: Number(form.productQty),
+            buyingPrice,
+            productQty,
         };
 
         try {
@@ -113,10 +142,10 @@ function AddRemoveProduct() {
                   </div>
 
                   <label>Buying Price</label>
-                  <input className="input" type="number" name="buyingPrice" placeholder="Enter buying price..." onChange={handleChange} value={form.buyingPrice} required />
+                  <input className="input" type="text" inputMode="decimal" name="buyingPrice" placeholder="Enter buying price..." onChange={handleChange} value={form.buyingPrice} required />
 
                   <label>Quantity</label>
-                  <input className="input" type="number" name="productQty" placeholder="Enter quantity..." onChange={handleChange} value={form.productQty} required />
+                  <input className="input" type="text" inputMode="numeric" name="productQty" placeholder="Enter quantity..." onChange={handleChange} value={form.productQty} required />
 
                   <div className="actions">
                     <button className="btn primary" type="submit">Add Product</button>

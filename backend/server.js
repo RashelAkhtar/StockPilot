@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import path from "path";
 import cookieParser from "cookie-parser";
+import rateLimit from "express-rate-limit";
 
 import dashboardRouter from "./routes/dashboard.js";
 import productRouter from "./routes/product.js";
@@ -20,7 +21,17 @@ dotenv.config({ path: envPath });
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configure CORS with explicit options
+app.set("trust proxy", 1);
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests, please try again later." },
+});
+
+
 app.use(
   cors({
     origin: process.env.CLIENT_URL,
@@ -32,6 +43,7 @@ app.use(
 
 app.use(express.json());
 app.use(cookieParser());
+app.use("/api/", limiter);
 
 // Health check endpoint
 app.get("/health", (req, res) => {

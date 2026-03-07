@@ -76,7 +76,7 @@ function Header({ user, setUser }) {
         <div className="brand">
           <h1>
             <NavLink to="/" className="brand-link">
-              Business Dashboard
+              StockPilot
             </NavLink>
           </h1>
         </div>
