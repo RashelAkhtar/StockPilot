@@ -3,6 +3,8 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import pool from "../config/db.js";
 import { protect } from "../middleware/auth.js";
+import { validate } from "../middleware/validate.js";
+import { registerSchema, loginSchema } from "../validation/auth.validation.js";
 
 const router = express.Router();
 
@@ -15,19 +17,14 @@ const cookieOptions = {
 
 // generate token for every new user id
 const generateToken = (id) => {
-  return jwt.sign({id}, process.env.JWT_SECRET, {
-    expiresIn: '30d',
+  return jwt.sign({ id }, process.env.JWT_SECRET, {
+    expiresIn: "30d",
   });
 };
 
 // Register
-router.post("/register", async (req, res) => {
+router.post("/register", validate(registerSchema), async (req, res) => {
   const { name, email, password } = req.body;
-
-  if (!name || !email || !password)
-    return res
-      .status(400)
-      .json({ message: "Please provide all required fields" });
 
   const userExists = await pool.query("Select * FROM users WHERE email = $1", [
     email,
@@ -52,13 +49,8 @@ router.post("/register", async (req, res) => {
 });
 
 // Login
-router.post("/login", async (req, res) => {
+router.post("/login", validate(loginSchema), async (req, res) => {
   const { email, password } = req.body;
-
-  if (!email || !password)
-    return res
-      .status(400)
-      .json({ message: "Please provide all required fields" });
 
   const user = await pool.query(`SELECT * FROM users WHERE email = $1`, [
     email,

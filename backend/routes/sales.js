@@ -1,5 +1,7 @@
 import express from "express";
 import pool from "../config/db.js";
+import { validate } from "../middleware/validate.js";
+import { salesSchema } from "../validation/sales.validation.js";
 
 const router = express.Router();
 
@@ -11,7 +13,7 @@ const parseLooseNumber = (value) => {
 };
 
 // ACID safe
-router.post("/", async (req, res) => {
+router.post("/",validate(salesSchema), async (req, res) => {
   const client = await pool.connect();
 
   try {

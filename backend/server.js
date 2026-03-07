@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import path from "path";
 import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
+import morgan from "morgan";
 
 import dashboardRouter from "./routes/dashboard.js";
 import productRouter from "./routes/product.js";
@@ -41,6 +42,7 @@ app.use(
   }),
 );
 
+app.use(morgan("dev"));
 app.use(express.json());
 app.use(cookieParser());
 app.use("/api/", limiter);
@@ -64,10 +66,10 @@ app.use((req, res) => {
 
 // Error handler
 app.use((err, req, res, next) => {
-  console.error("Server error:", err);
-  res
-    .status(500)
-    .json({ error: "Internal server error", message: err.message });
+  console.error(err);
+  res.status(500).json({
+    message: "Internal server error",
+  });
 });
 
 app.listen(PORT, () => {
