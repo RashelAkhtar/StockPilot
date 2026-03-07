@@ -1,20 +1,21 @@
 export function buildSummaryQuery(cfg, userId) {
   const baseQuery = `
     SELECT
-      COALESCE(SUM(s.selling_price * s.quantity), 0)::numeric AS total_revenue,
-      COALESCE(SUM(s.total_profit), 0)::numeric AS total_profit,
-      COALESCE(SUM(s.quantity), 0)::int AS total_sold,
+      COALESCE(SUM(oi.selling_price * oi.quantity), 0)::numeric AS total_revenue,
+      COALESCE(SUM(oi.total_profit), 0)::numeric AS total_profit,
+      COALESCE(SUM(oi.quantity), 0)::int AS total_sold,
       (SELECT COUNT(*) FROM product_list WHERE user_id = $1)::int AS total_products,
       (SELECT COALESCE(SUM(buying_price * quantity),0)::numeric FROM product_list WHERE user_id = $1) AS inventory_value
-    FROM sales s
+    FROM orders o
+    LEFT JOIN order_items oi ON oi.order_id = o.id
   `;
 
   if (!cfg) {
-    return { text: `${baseQuery} WHERE s.user_id = $1`, values: [userId] };
+    return { text: `${baseQuery} WHERE o.user_id = $1`, values: [userId] };
   }
 
   return {
-    text: `${baseQuery} WHERE s.user_id = $1 AND s.sold_at >= now() - $2::interval`,
+    text: `${baseQuery} WHERE o.user_id = $1 AND o.created_at >= now() - $2::interval`,
     values: [userId, cfg.interval]
   };
 }
@@ -24,11 +25,13 @@ export function buildProductRankingQuery(cfg, userId, order = 'DESC') {
     SELECT
       p.id,
       p.product_name,
-      COALESCE(SUM(s.quantity), 0)::int AS total_sold
+      COALESCE(SUM(CASE WHEN o.id IS NOT NULL THEN oi.quantity ELSE 0 END), 0)::int AS total_sold
     FROM product_list p
-    LEFT JOIN sales s
-      ON p.id = s.product_id
-      AND s.user_id = $1
+    LEFT JOIN order_items oi
+      ON p.id = oi.product_id
+    LEFT JOIN orders o
+      ON o.id = oi.order_id
+      AND o.user_id = $1
   `;
 
   const groupOrderLimit = `
@@ -47,7 +50,7 @@ export function buildProductRankingQuery(cfg, userId, order = 'DESC') {
   return {
     text: `
       ${base}
-      AND s.sold_at >= now() - $2::interval
+      AND o.created_at >= now() - $2::interval
       WHERE p.user_id = $1
       ${groupOrderLimit}
     `,
@@ -56,30 +59,38 @@ export function buildProductRankingQuery(cfg, userId, order = 'DESC') {
 }
 
 export function buildTrendQuery(cfg, userId, column) {
+  const columnMap = {
+    quantity: "oi.quantity",
+    total_profit: "oi.total_profit",
+  };
+  const columnExpr = columnMap[column] ?? "oi.quantity";
+
   if (!cfg) {
     return {
       text: `
         SELECT
-          to_char(date_trunc('month', sold_at), 'YYYY-MM') AS date,
-          COALESCE(SUM(${column}), 0) AS value
-        FROM sales
-        WHERE user_id = $1
-        GROUP BY date_trunc('month', sold_at)
+          to_char(date_trunc('month', o.created_at), 'YYYY-MM') AS date,
+          COALESCE(SUM(${columnExpr}), 0) AS value
+        FROM orders o
+        INNER JOIN order_items oi ON oi.order_id = o.id
+        WHERE o.user_id = $1
+        GROUP BY date_trunc('month', o.created_at)
         ORDER BY date
       `,
       values: [userId]
     };
   }
 
-  return {
-    text: `
+    return {
+      text: `
         SELECT
-          to_char(date_trunc('${cfg.groupBy}', sold_at), '${cfg.format}') AS date,
-          COALESCE(SUM(${column}), 0) AS value
-        FROM sales
-        WHERE user_id = $1
-          AND sold_at >= now() - $2::interval
-        GROUP BY date_trunc('${cfg.groupBy}', sold_at)
+          to_char(date_trunc('${cfg.groupBy}', o.created_at), '${cfg.format}') AS date,
+          COALESCE(SUM(${columnExpr}), 0) AS value
+        FROM orders o
+        INNER JOIN order_items oi ON oi.order_id = o.id
+        WHERE o.user_id = $1
+          AND o.created_at >= now() - $2::interval
+        GROUP BY date_trunc('${cfg.groupBy}', o.created_at)
         ORDER BY date
       `,
     values: [userId, cfg.interval]

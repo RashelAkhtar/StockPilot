@@ -100,24 +100,6 @@ router.post("/",validate(salesSchema), async (req, res) => {
         ],
       );
 
-      // Keep the existing sales table in sync so existing dashboard/table APIs
-      // continue to work without additional migrations.
-      await client.query(
-        `INSERT INTO sales
-         (user_id, product_id, selling_price, quantity, profit_per_unit, total_profit, customers_name, customers_phone)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-        [
-          userId,
-          productId,
-          sellingPrice,
-          quantity,
-          profitPerUnit,
-          totalProfit,
-          customersName || null,
-          customersPhone || null,
-        ],
-      );
-
       await client.query(
         `UPDATE product_list
          SET
@@ -159,7 +141,22 @@ router.get("/", async (req, res) => {
   try {
     const userId = req.user.id;
     const result = await pool.query(
-      "SELECT * FROM sales WHERE user_id = $1 ORDER BY sold_at DESC",
+      `
+        SELECT
+          oi.id,
+          oi.product_id,
+          oi.selling_price,
+          oi.quantity,
+          oi.profit_per_unit,
+          oi.total_profit,
+          o.customers_name,
+          o.customers_phone,
+          o.created_at AS sold_at
+        FROM order_items oi
+        INNER JOIN orders o ON o.id = oi.order_id
+        WHERE o.user_id = $1
+        ORDER BY o.created_at DESC, oi.id DESC
+      `,
       [userId],
     );
 
