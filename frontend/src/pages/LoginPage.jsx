@@ -18,7 +18,7 @@ function LoginPage({ setUser }) {
       const res = await axios.post(`${API}/api/auth/login`, form);
 
       setUser(res.data.user);
-      navigate("/");
+      navigate("/summary");
     } catch {
       setError("Invalid email or password");
     }

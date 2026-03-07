@@ -8,6 +8,7 @@ import "./styles/Animations.css";
 import "./styles/Auth.css";
 
 import Header from "./components/Header";
+import HomePage from "./pages/HomePage";
 import SummaryPage from "./pages/SummaryPage";
 import ProductsPage from "./pages/ProductsPage";
 import SalesPage from "./pages/SalesPage";
@@ -47,14 +48,15 @@ function App() {
       <div className="app-container">
         <Header user={user} setUser={setUser} />
         <Routes>
-          <Route path="/" element={<SummaryPage user={user} error={error} />} />
+          <Route path="/" element={<HomePage user={user} />} />
+          <Route path="/summary" element={<SummaryPage user={user} error={error} />} />
           <Route
             path="/login"
-            element={user ? <Navigate to="/" /> : <LoginPage setUser={setUser} />}
+            element={user ? <Navigate to="/summary" /> : <LoginPage setUser={setUser} />}
           />
           <Route
             path="/register"
-            element={user ? <Navigate to="/" /> : <RegisterPage setUser={setUser} />}
+            element={user ? <Navigate to="/summary" /> : <RegisterPage setUser={setUser} />}
           />
           <Route path="/products" element={<ProductsPage user={user} error={error} />} />
           <Route path="/sales" element={<SalesPage user={user} error={error} />} />

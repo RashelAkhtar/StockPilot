@@ -11,7 +11,7 @@ function Header({ user, setUser }) {
   const handleLogOut = async () => {
     await axios.post(`${API}/api/auth/logout`);
     setUser(null);
-    navigate("/login");
+    navigate("/");
   };
 
   useEffect(() => {
@@ -75,15 +75,15 @@ function Header({ user, setUser }) {
       <div className="header-main">
         <div className="brand">
           <h1>
-            <NavLink to="/" className="brand-link">
-              StockPilot
-            </NavLink>
+              <NavLink to="/" className="brand-link">
+                StockPilot
+              </NavLink>
           </h1>
         </div>
         <nav className="nav-actions">
           {user ? (
             <>
-              <NavLink to="/" className={({ isActive }) => (isActive ? "btn active" : "btn")}>
+              <NavLink to="/summary" className={({ isActive }) => (isActive ? "btn active" : "btn")}>
                 Summary
               </NavLink>
               <NavLink to="/products" className={({ isActive }) => (isActive ? "btn active" : "btn")}>

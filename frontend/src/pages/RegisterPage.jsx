@@ -19,7 +19,7 @@ function RegisterPage({ setUser }) {
       const res = await axios.post(`${API}/api/auth/register`, form);
 
       setUser(res.data.user);
-      navigate("/");
+      navigate("/summary");
     } catch (err) {
       setError(err?.response?.data?.message || "Registration failed");
     }
