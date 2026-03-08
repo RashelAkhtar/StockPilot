@@ -28,6 +28,7 @@ function ProductSold() {
   const [products, setProducts] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [modal, setModal] = useState({
     open: false,
     title: "",
@@ -214,29 +215,38 @@ function ProductSold() {
   };
 
   const handleKeyDown = (e) => {
-    if (!suggestions || suggestions.length === 0) return;
-
     if (e.key === "ArrowDown") {
+      if (!suggestions || suggestions.length === 0) return;
       e.preventDefault();
       setActiveIndex((i) => Math.min(i + 1, suggestions.length - 1));
       return;
     }
     if (e.key === "ArrowUp") {
+      if (!suggestions || suggestions.length === 0) return;
       e.preventDefault();
       setActiveIndex((i) => Math.max(i - 1, 0));
       return;
     }
     if (e.key === "Enter") {
-      if (activeIndex >= 0 && activeIndex < suggestions.length) {
+      if (suggestions.length > 0 && activeIndex >= 0 && activeIndex < suggestions.length) {
         e.preventDefault();
         selectSuggestion(suggestions[activeIndex]);
+        return;
       }
+      e.preventDefault();
+      if (!isSubmitting) addToCart();
       return;
     }
     if (e.key === "Escape") {
       setSuggestions([]);
       setActiveIndex(-1);
     }
+  };
+
+  const handleAddToCartOnEnter = (e) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    if (!isSubmitting) addToCart();
   };
 
   const cartTotals = useMemo(() => {
@@ -256,6 +266,7 @@ function ProductSold() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
 
     if (!cart.length) {
       setModal({
@@ -278,6 +289,7 @@ function ProductSold() {
     };
 
     try {
+      setIsSubmitting(true);
       const res = await fetch(`${API}/api/sales`, {
         method: "POST",
         credentials: "include",
@@ -344,6 +356,8 @@ function ProductSold() {
         message: "Failed to record order",
         variant: "error",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -385,6 +399,7 @@ function ProductSold() {
                 placeholder="Customer's name..."
                 onChange={handleChange}
                 value={form.customersName}
+                disabled={isSubmitting}
               />
 
               <label>Customer's Phone No</label>
@@ -395,6 +410,7 @@ function ProductSold() {
                 placeholder="Customer's Phone No..."
                 onChange={handleChange}
                 value={form.customersPhone}
+                disabled={isSubmitting}
               />
             </div>
 
@@ -410,6 +426,7 @@ function ProductSold() {
                   value={form.productName}
                   onChange={handleChange}
                   onKeyDown={handleKeyDown}
+                  disabled={isSubmitting}
                 />
 
                 {suggestions.length > 0 && (
@@ -450,8 +467,10 @@ function ProductSold() {
                 inputMode="decimal"
                 name="sellingPrice"
                 onChange={handleChange}
+                onKeyDown={handleAddToCartOnEnter}
                 placeholder="Enter selling price..."
                 value={form.sellingPrice}
+                disabled={isSubmitting}
               />
 
               <label>Quantity</label>
@@ -461,14 +480,16 @@ function ProductSold() {
                 inputMode="numeric"
                 name="productQty"
                 onChange={handleChange}
+                onKeyDown={handleAddToCartOnEnter}
                 placeholder="Enter quantity..."
                 value={form.productQty}
+                disabled={isSubmitting}
               />
             </div>
           </div>
 
           <div className="actions">
-            <button className="btn" type="button" onClick={addToCart}>
+            <button className="btn" type="button" onClick={addToCart} disabled={isSubmitting}>
               Add Product
             </button>
           </div>
@@ -480,7 +501,7 @@ function ProductSold() {
                 className="btn danger"
                 type="button"
                 onClick={clearCart}
-                disabled={!cart.length}
+                disabled={!cart.length || isSubmitting}
               >
                 Clear Cart
               </button>
@@ -507,6 +528,7 @@ function ProductSold() {
                         className="btn danger"
                         type="button"
                         onClick={() => removeCartItem(item.productId)}
+                        disabled={isSubmitting}
                       >
                         Remove
                       </button>
@@ -527,9 +549,9 @@ function ProductSold() {
             <button
               className="btn primary"
               type="submit"
-              disabled={!cart.length}
+              disabled={!cart.length || isSubmitting}
             >
-              Record Order
+              {isSubmitting ? "Recording..." : "Record Order"}
             </button>
           </div>
         </form>
