@@ -283,22 +283,24 @@ function DashboardSummary() {
 
         <div className="card table-card">
           <h3>Least Sold Products</h3>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th>Sold</th>
-              </tr>
-            </thead>
-            <tbody>
-              {leastProducts.map((p) => (
-                <tr key={p.id}>
-                  <td>{p.product_name}</td>
-                  <td>{numberFormatter.format(Number(p.total_sold ?? 0))}</td>
+          <div className="summary-table-wrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Sold</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {leastProducts.map((p) => (
+                  <tr key={p.id}>
+                    <td>{p.product_name}</td>
+                    <td>{numberFormatter.format(Number(p.total_sold ?? 0))}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 

@@ -1,5 +1,5 @@
 import {flexRender, getCoreRowModel, getPaginationRowModel, getSortedRowModel, useReactTable} from "@tanstack/react-table";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import "../styles/ProductTable.css";
 import Modal from './Modal';
 
@@ -26,7 +26,7 @@ function ProductTable () {
     const [search, setSearch] = useState("");
 
     // Fetch product
-    const fetchProduct = async () => {
+    const fetchProduct = useCallback(async () => {
         try {
             const res = await fetch(`${API}/api/product`, { credentials: "include" });
             const json = await res.json();
@@ -46,10 +46,10 @@ function ProductTable () {
         } finally {
             setLoading(false);
         }
-    };
+    }, [API]);
 
     // Fetch sold product info
-    const fetchSoldDetails = async () => {
+    const fetchSoldDetails = useCallback(async () => {
         try {
             const res = await fetch(`${API}/api/sales`, { credentials: "include" });
             const json = await res.json();
@@ -71,7 +71,7 @@ function ProductTable () {
         } finally {
             setLoading(false);
         }
-    }
+    }, [API]);
 
     useEffect(() => {
         fetchProduct();
@@ -86,7 +86,7 @@ function ProductTable () {
             window.removeEventListener("product:added", onAdded);
             window.removeEventListener("product:sold", onSold);
         };
-    }, []);
+    }, [fetchProduct, fetchSoldDetails]);
 
     // whenever products or sales change, merge them
     useEffect(() => {

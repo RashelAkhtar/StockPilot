@@ -7,10 +7,12 @@ function Header({ user, setUser }) {
   const navigate = useNavigate();
   const API = import.meta.env.VITE_API || "http://localhost:3000";
   const [lowStockItems, setLowStockItems] = useState([]);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogOut = async () => {
     await axios.post(`${API}/api/auth/logout`);
     setUser(null);
+    setMobileMenuOpen(false);
     navigate("/");
   };
 
@@ -80,19 +82,28 @@ function Header({ user, setUser }) {
               </NavLink>
           </h1>
         </div>
-        <nav className="nav-actions">
+        <button
+          type="button"
+          className="menu-toggle btn"
+          onClick={() => setMobileMenuOpen((prev) => !prev)}
+          aria-expanded={mobileMenuOpen}
+          aria-label="Toggle navigation"
+        >
+          {mobileMenuOpen ? "Close" : "Menu"}
+        </button>
+        <nav className={`nav-actions${mobileMenuOpen ? " open" : ""}`}>
           {user ? (
             <>
-              <NavLink to="/summary" className={({ isActive }) => (isActive ? "btn active" : "btn")}>
+              <NavLink to="/summary" onClick={() => setMobileMenuOpen(false)} className={({ isActive }) => (isActive ? "btn active" : "btn")}>
                 Summary
               </NavLink>
-              <NavLink to="/products" className={({ isActive }) => (isActive ? "btn active" : "btn")}>
+              <NavLink to="/products" onClick={() => setMobileMenuOpen(false)} className={({ isActive }) => (isActive ? "btn active" : "btn")}>
                 Products
               </NavLink>
-              <NavLink to="/sales" className={({ isActive }) => (isActive ? "btn active" : "btn")}>
+              <NavLink to="/sales" onClick={() => setMobileMenuOpen(false)} className={({ isActive }) => (isActive ? "btn active" : "btn")}>
                 Record Sales
               </NavLink>
-              <NavLink to="/history" className={({ isActive }) => (isActive ? "btn active" : "btn")}>
+              <NavLink to="/history" onClick={() => setMobileMenuOpen(false)} className={({ isActive }) => (isActive ? "btn active" : "btn")}>
                 History
               </NavLink>
               <button className="btn" onClick={handleLogOut}>
@@ -101,10 +112,10 @@ function Header({ user, setUser }) {
             </>
           ) : (
             <>
-              <NavLink to="/login" className={({ isActive }) => (isActive ? "btn active" : "btn")}>
+              <NavLink to="/login" onClick={() => setMobileMenuOpen(false)} className={({ isActive }) => (isActive ? "btn active" : "btn")}>
                 Login
               </NavLink>
-              <NavLink to="/register" className={({ isActive }) => (isActive ? "btn active" : "btn")}>
+              <NavLink to="/register" onClick={() => setMobileMenuOpen(false)} className={({ isActive }) => (isActive ? "btn active" : "btn")}>
                 Register
               </NavLink>
             </>

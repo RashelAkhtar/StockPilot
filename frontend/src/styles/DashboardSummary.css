@@ -30,6 +30,9 @@
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
+  overflow-x: auto;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
 }
 
 .range-btn {
@@ -273,6 +276,13 @@
   width: 100%;
   border-collapse: collapse;
   margin-top: var(--spacing-md);
+  min-width: 280px;
+}
+
+.summary-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .dashboard-summary .table thead {
@@ -393,13 +403,14 @@
   
   .range-controls {
     width: 100%;
-    justify-content: center;
+    justify-content: flex-start;
+    padding: 0.3rem;
   }
   
   .range-btn {
-    flex: 1;
-    min-width: 60px;
-    padding: 0.5rem 0.75rem;
-    font-size: 0.8125rem;
+    flex: 0 0 auto;
+    min-width: 52px;
+    padding: 0.45rem 0.65rem;
+    font-size: 0.75rem;
   }
 }

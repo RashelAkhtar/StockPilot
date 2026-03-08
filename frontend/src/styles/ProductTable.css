@@ -2,12 +2,19 @@
 
 .page-title{ margin:0 0 12px 0 }
 
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .table{
   width:100%;
   border-collapse: collapse;
   background: var(--card);
   border-radius: 8px;
   overflow: hidden;
+  min-width: 860px;
 }
 
 .table thead tr{ background: linear-gradient(90deg, rgba(37,99,235,0.06), rgba(37,99,235,0.02)); }
@@ -54,4 +61,24 @@
   .charts-grid, .tables-grid{ grid-template-columns: 1fr }
   .table th:nth-child(3), .table td:nth-child(3),
   .table th:nth-child(4), .table td:nth-child(4){ display:none }
+}
+
+@media (max-width: 768px) {
+  .table {
+    min-width: 720px;
+  }
+
+  .table-toolbar > div:last-child {
+    margin-left: 0 !important;
+    width: 100%;
+  }
+
+  .table-toolbar > div:last-child .input {
+    min-width: 0 !important;
+    width: 100%;
+  }
+
+  .pagination {
+    justify-content: space-between;
+  }
 }

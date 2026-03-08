@@ -103,7 +103,7 @@ function HistoryTable() {
     });
   }, [rows, search, sortBy, filterStatus]);
 
-  const getPaymentStatus = (amountPaid, amountDue, totalAmount) => {
+  const getPaymentStatus = (amountPaid, amountDue) => {
     if (amountDue === 0) return "Paid";
     if (amountPaid === 0) return "Unpaid";
     return "Partial";
@@ -182,50 +182,52 @@ function HistoryTable() {
           <p className="history-empty">No recorded orders found.</p>
         </div>
       ) : (
-        <table className="history-table">
-          <thead>
-            <tr>
-              <th>Order</th>
-              <th>Date</th>
-              <th>Customer</th>
-              <th>Items</th>
-              <th>Total</th>
-              <th>Paid</th>
-              <th>Due</th>
-              <th>Profit</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredRows.map((row) => {
-              const paymentStatus = getPaymentStatus(row.amountPaid, row.amountDue, row.totalAmount);
-              return (
-                <tr
-                  key={row.orderId}
-                  onClick={() => openModal(row)}
-                  className={row.amountDue > 0 ? "has-due" : ""}
-                  style={{ cursor: "pointer" }}
-                >
-                  <td>#{row.orderId}</td>
-                  <td>{new Date(row.createdAt).toLocaleDateString("en-IN", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}</td>
-                  <td>{row.customersName}</td>
-                  <td>{row.totalProducts}</td>
-                  <td>₹{moneyFormatter.format(Number(row.totalAmount))}</td>
-                  <td>₹{moneyFormatter.format(Number(row.amountPaid))}</td>
-                  <td className={row.amountDue > 0 ? "due-cell" : ""}>₹{moneyFormatter.format(Number(row.amountDue))}</td>
-                  <td>₹{moneyFormatter.format(Number(row.orderProfit))}</td>
-                  <td><span className={getStatusBadgeClass(paymentStatus)}>{paymentStatus}</span></td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <div className="history-table-wrap">
+          <table className="history-table">
+            <thead>
+              <tr>
+                <th>Order</th>
+                <th>Date</th>
+                <th>Customer</th>
+                <th>Items</th>
+                <th>Total</th>
+                <th>Paid</th>
+                <th>Due</th>
+                <th>Profit</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredRows.map((row) => {
+                const paymentStatus = getPaymentStatus(row.amountPaid, row.amountDue);
+                return (
+                  <tr
+                    key={row.orderId}
+                    onClick={() => openModal(row)}
+                    className={row.amountDue > 0 ? "has-due" : ""}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <td>#{row.orderId}</td>
+                    <td>{new Date(row.createdAt).toLocaleDateString("en-IN", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}</td>
+                    <td>{row.customersName}</td>
+                    <td>{row.totalProducts}</td>
+                    <td>₹{moneyFormatter.format(Number(row.totalAmount))}</td>
+                    <td>₹{moneyFormatter.format(Number(row.amountPaid))}</td>
+                    <td className={row.amountDue > 0 ? "due-cell" : ""}>₹{moneyFormatter.format(Number(row.amountDue))}</td>
+                    <td>₹{moneyFormatter.format(Number(row.orderProfit))}</td>
+                    <td><span className={getStatusBadgeClass(paymentStatus)}>{paymentStatus}</span></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {/* detail modal */}
