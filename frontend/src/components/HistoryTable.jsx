@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import Modal from "./Modal";
 import "../styles/HistoryTable.css";
 
 function HistoryTable() {
@@ -9,6 +10,7 @@ function HistoryTable() {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("date"); // date, amount, profit
   const [filterStatus, setFilterStatus] = useState("all"); // all, paid, partial, unpaid
+  const [modalInfo, setModalInfo] = useState({ open: false, row: null });
   const numberFormatter = useMemo(() => new Intl.NumberFormat("en-IN"), []);
   const moneyFormatter = useMemo(
     () =>
@@ -79,7 +81,9 @@ function HistoryTable() {
       filtered = filtered.filter((row) => {
         if (filterStatus === "paid") return row.amountDue === 0;
         if (filterStatus === "partial") return row.amountDue > 0 && row.amountPaid > 0;
-        if (filterStatus === "unpaid") return row.amountPaid === 0;
+        if (filterStatus === "unpaid") {
+          return row.amountPaid === 0 && row.amountDue > 0;
+        }
         return true;
       });
     }
@@ -121,31 +125,15 @@ function HistoryTable() {
   if (loading) return <p className="loading">Loading order history...</p>;
   if (error) return <p className="history-error">{error}</p>;
 
+  const openModal = (row) => {
+    setModalInfo({ open: true, row });
+  };
+
+  const closeModal = () => setModalInfo({ open: false, row: null });
+
   return (
     <div className="history-container">
-      <div className="history-header-section">
-        <div className="history-header-content">
-          <div>
-            <h2 className="history-page-title">Order History</h2>
-            <p className="history-page-subtitle">View and manage all your sales orders</p>
-          </div>
-          <div className="history-stats">
-            <div className="stat-box">
-              <span className="stat-label">Total Orders</span>
-              <span className="stat-value">{rows.length}</span>
-            </div>
-            <div className="stat-box">
-              <span className="stat-label">Total Revenue</span>
-              <span className="stat-value">₹{moneyFormatter.format(rows.reduce((sum, r) => sum + r.totalAmount, 0))}</span>
-            </div>
-            <div className="stat-box">
-              <span className="stat-label">Total Profit</span>
-              <span className="stat-value">₹{moneyFormatter.format(rows.reduce((sum, r) => sum + r.orderProfit, 0))}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
+      {/* controls remain above table */}
       <div className="history-controls">
         <div className="search-wrapper">
           <svg className="search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -194,90 +182,84 @@ function HistoryTable() {
           <p className="history-empty">No recorded orders found.</p>
         </div>
       ) : (
-        <div className="history-grid">
-          {filteredRows.map((row) => {
-            const paymentStatus = getPaymentStatus(row.amountPaid, row.amountDue, row.totalAmount);
-            return (
-              <article key={row.orderId} className="history-card">
-                <div className="card-header">
-                  <div className="order-info">
-                    <div className="order-id-section">
-                      <span className="order-id-label">Order</span>
-                      <h3 className="order-id">#{row.orderId}</h3>
-                    </div>
-                    <div className="order-date">
-                      {new Date(row.createdAt).toLocaleDateString("en-IN", {
+        <table className="history-table">
+          <thead>
+            <tr>
+              <th>Order</th>
+              <th>Date</th>
+              <th>Customer</th>
+              <th>Items</th>
+              <th>Total</th>
+              <th>Paid</th>
+              <th>Due</th>
+              <th>Profit</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredRows.map((row) => {
+              const paymentStatus = getPaymentStatus(row.amountPaid, row.amountDue, row.totalAmount);
+              return (
+                <tr
+                  key={row.orderId}
+                  onClick={() => openModal(row)}
+                  className={row.amountDue > 0 ? "has-due" : ""}
+                  style={{ cursor: "pointer" }}
+                >
+                  <td>#{row.orderId}</td>
+                  <td>{new Date(row.createdAt).toLocaleDateString("en-IN", {
                         day: "2-digit",
                         month: "short",
                         year: "numeric",
                         hour: "2-digit",
                         minute: "2-digit",
-                      })}
-                    </div>
-                  </div>
-                  <span className={getStatusBadgeClass(paymentStatus)}>
-                    {paymentStatus}
-                  </span>
-                </div>
-
-                <div className="customer-section">
-                  <div className="customer-header">
-                    <h4 className="customer-name">{row.customersName}</h4>
-                  </div>
-                  <p className="customer-phone">📞 {row.customersPhone}</p>
-                </div>
-
-                <div className="items-section">
-                  <div className="items-header">
-                    <span className="items-title">Items ({row.totalProducts})</span>
-                  </div>
-                  <ul className="history-items">
-                    {row.items.slice(0, 3).map((item, idx) => (
-                      <li key={`${row.orderId}-${idx}`} className="item-row">
-                        <div className="item-name-qty">
-                          <span className="item-name">{item.productName}</span>
-                          <span className="item-qty">×{numberFormatter.format(Number(item.quantity))}</span>
-                        </div>
-                        <span className="item-profit">
-                          ₹{moneyFormatter.format(Number(item.totalProfit))}
-                        </span>
-                      </li>
-                    ))}
-                    {row.items.length > 3 && (
-                      <li className="item-more">
-                        +{row.items.length - 3} more item{row.items.length - 3 > 1 ? "s" : ""}
-                      </li>
-                    )}
-                  </ul>
-                </div>
-
-                <div className="card-divider"></div>
-
-                <div className="amounts-section">
-                  <div className="amount-row">
-                    <span className="amount-label">Total</span>
-                    <span className="amount-value total">₹{moneyFormatter.format(Number(row.totalAmount))}</span>
-                  </div>
-                  <div className="amount-row">
-                    <span className="amount-label">Paid</span>
-                    <span className="amount-value paid">₹{moneyFormatter.format(Number(row.amountPaid))}</span>
-                  </div>
-                  {row.amountDue > 0 && (
-                    <div className="amount-row">
-                      <span className="amount-label">Due</span>
-                      <span className="amount-value due">₹{moneyFormatter.format(Number(row.amountDue))}</span>
-                    </div>
-                  )}
-                  <div className="amount-row highlight">
-                    <span className="amount-label">Order Profit</span>
-                    <span className="amount-value profit">₹{moneyFormatter.format(Number(row.orderProfit))}</span>
-                  </div>
-                </div>
-              </article>
-            );
-          })}
-        </div>
+                      })}</td>
+                  <td>{row.customersName}</td>
+                  <td>{row.totalProducts}</td>
+                  <td>₹{moneyFormatter.format(Number(row.totalAmount))}</td>
+                  <td>₹{moneyFormatter.format(Number(row.amountPaid))}</td>
+                  <td className={row.amountDue > 0 ? "due-cell" : ""}>₹{moneyFormatter.format(Number(row.amountDue))}</td>
+                  <td>₹{moneyFormatter.format(Number(row.orderProfit))}</td>
+                  <td><span className={getStatusBadgeClass(paymentStatus)}>{paymentStatus}</span></td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       )}
+
+      {/* detail modal */}
+      <Modal
+        open={modalInfo.open}
+        title={modalInfo.row ? `Order #${modalInfo.row.orderId}` : "Details"}
+        onClose={closeModal}
+        primaryLabel="Close"
+      >
+        {modalInfo.row ? (
+          <div className="order-detail-modal">
+            <p><strong>Customer:</strong> {modalInfo.row.customersName}</p>
+            <p><strong>Phone:</strong> {modalInfo.row.customersPhone || '-'} </p>
+            <table className="detail-table">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Qty</th>
+                  <th>Profit</th>
+                </tr>
+              </thead>
+              <tbody>
+                {modalInfo.row.items.map((itm, idx) => (
+                  <tr key={idx}>
+                    <td>{itm.productName}</td>
+                    <td>{numberFormatter.format(itm.quantity)}</td>
+                    <td>₹{moneyFormatter.format(itm.totalProfit)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
+      </Modal>
     </div>
   );
 }

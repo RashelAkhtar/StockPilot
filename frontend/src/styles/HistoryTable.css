@@ -119,7 +119,62 @@
   border-color: var(--primary);
 }
 
-/* Grid Layout */
+/* table layout for simplified history view */
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+.history-table th,
+.history-table td {
+  border: 1px solid var(--border);
+  padding: 0.6rem 0.8rem;
+  text-align: left;
+}
+
+.history-table th {
+  background: var(--bg-secondary);
+  font-weight: 600;
+}
+
+.history-table tr:nth-child(even) {
+  background: var(--bg-primary);
+}
+
+.history-table td span.status-badge {
+  display: inline-block;
+}
+
+/* highlight orders with amount due */
+.history-table tr.has-due {
+  background: rgba(239, 68, 68, 0.1);
+}
+.history-table .due-cell {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+/* modal detail table inside history */
+.order-detail-modal table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
+.order-detail-modal th,
+.order-detail-modal td {
+  border: 1px solid var(--border);
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+}
+.order-detail-modal th {
+  background: var(--bg-secondary);
+  font-weight: 600;
+}
+
+/* old grid layout kept for reference but not used in simplified view */
 .history-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
