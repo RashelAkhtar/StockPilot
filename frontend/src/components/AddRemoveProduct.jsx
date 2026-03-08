@@ -25,6 +25,7 @@ function AddRemoveProduct() {
   const [products, setProducts] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -37,6 +38,8 @@ function AddRemoveProduct() {
         setProducts(rows);
       } catch (err) {
         console.error("Failed to preload products", err);
+      } finally {
+        setLoading(false);
       }
     };
     fetchProducts();
@@ -135,6 +138,8 @@ function AddRemoveProduct() {
       setIsSubmitting(false);
     }
   };
+
+  if (loading) return <p className="loading">Loading products...</p>;
 
   return (
     <div className="add-product page">

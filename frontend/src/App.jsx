@@ -30,10 +30,21 @@ function App() {
     const fetchUser = async () => {
       try {
         const res = await axios.get(`${API}/api/auth/me`);
-
         setUser(res.data);
-      } catch {
-        setUser(null);
+      } catch (err) {
+        if (err.response?.data?.code === "TOKEN_EXPIRED") {
+          // Try to refresh token
+          try {
+            await axios.post(`${API}/api/auth/refresh`);
+            // Retry fetching user after refresh
+            const retryRes = await axios.get(`${API}/api/auth/me`);
+            setUser(retryRes.data);
+          } catch (refreshErr) {
+            setUser(null);
+          }
+        } else {
+          setUser(null);
+        }
       } finally {
         setLoading(false);
       }

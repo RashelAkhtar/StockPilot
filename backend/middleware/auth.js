@@ -3,10 +3,10 @@ import pool from "../config/db.js";
 
 export const protect = async (req, res, next) => {
   try {
-    const token = req.cookies.token;
+    const token = req.cookies.accessToken;
 
     if (!token)
-      return res.status(401).json({ message: "Not authorized, no token" });
+      return res.status(401).json({ message: "Not authorized, no access token" });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
@@ -16,12 +16,15 @@ export const protect = async (req, res, next) => {
     );
 
     if (user.rows.length === 0)
-      return res.status(401).json({ message: "Not authorized, no token" });
+      return res.status(401).json({ message: "Not authorized, user not found" });
 
     req.user = user.rows[0];
     next();
   } catch (err) {
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: "Access token expired", code: "TOKEN_EXPIRED" });
+    }
     console.error(err);
-    res.status(400).json({ message: "Not authorized, token failed" });
+    res.status(401).json({ message: "Not authorized, invalid token" });
   }
 };

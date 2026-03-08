@@ -111,7 +111,7 @@ function DashboardSummary() {
     fetchDashboardData();
   }, [API, range]);
 
-  if (loading) return <p>Loading Dashboard...</p>;
+  if (loading) return <p className="loading">Loading Dashboard...</p>;
   if (error) return <p style={{ color: "red" }}>{error}</p>;
 
   // If no product is added

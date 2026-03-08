@@ -9,12 +9,15 @@ function RegisterPage({ setUser }) {
     password: "",
   });
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const API = import.meta.env.VITE_API || "http://localhost:3000";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     setError("");
+    setIsSubmitting(true);
     try {
       const res = await axios.post(`${API}/api/auth/register`, form);
 
@@ -22,6 +25,8 @@ function RegisterPage({ setUser }) {
       navigate("/summary");
     } catch (err) {
       setError(err?.response?.data?.message || "Registration failed");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -67,8 +72,8 @@ function RegisterPage({ setUser }) {
           />
 
           <div className="actions">
-            <button className="btn primary auth-submit" type="submit">
-              Register
+            <button className="btn primary auth-submit" type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Registering..." : "Register"}
             </button>
           </div>
 

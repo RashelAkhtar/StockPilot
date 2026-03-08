@@ -8,12 +8,15 @@ function LoginPage({ setUser }) {
     password: "",
   });
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const API = import.meta.env.VITE_API || "http://localhost:3000";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     setError("");
+    setIsSubmitting(true);
     try {
       const res = await axios.post(`${API}/api/auth/login`, form);
 
@@ -21,6 +24,8 @@ function LoginPage({ setUser }) {
       navigate("/summary");
     } catch {
       setError("Invalid email or password");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -55,8 +60,8 @@ function LoginPage({ setUser }) {
           />
 
           <div className="actions">
-            <button className="btn primary auth-submit" type="submit">
-              Login
+            <button className="btn primary auth-submit" type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Logging in..." : "Login"}
             </button>
           </div>
 
