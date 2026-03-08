@@ -13,12 +13,16 @@ const parseLooseNumber = (value) => {
 };
 
 // ACID safe
-router.post("/",validate(salesSchema), async (req, res) => {
+router.post("/", validate(salesSchema), async (req, res) => {
   const client = await pool.connect();
 
   try {
     const userId = req.user.id;
-    const { customersName = null, customersPhone = null } = req.body;
+    const {
+      customersName = null,
+      customersPhone = null,
+      amountPaid = 0,
+    } = req.body;
 
     // Accept new cart payload (`items`) and keep backward compatibility
     // with older single-product payload shape.
@@ -41,33 +45,58 @@ router.post("/",validate(salesSchema), async (req, res) => {
         .json({ error: "At least one cart item is required" });
     }
 
-    await client.query("BEGIN");
+    const paid = parseLooseNumber(amountPaid) || 0;
+    if (!Number.isFinite(paid) || paid < 0) {
+      return res
+        .status(400)
+        .json({ error: "amountPaid must be a valid non-negative number" });
+    }
 
-    const orderInsert = await client.query(
-      `INSERT INTO orders (user_id, customers_name, customers_phone)
-       VALUES ($1, $2, $3)
-       RETURNING id`,
-      [userId, customersName || null, customersPhone || null],
-    );
-
-    const orderId = orderInsert.rows[0].id;
-    const processedItems = [];
-
+    const normalizedItems = [];
+    let totalAmount = 0;
     for (const item of items) {
       const productId = Number(item.productId);
       const sellingPrice = parseLooseNumber(item.sellingPrice);
       const quantity = parseLooseNumber(item.quantity);
 
       if (!Number.isInteger(productId) || productId <= 0) {
-        throw new Error("Invalid product id in cart");
+        return res.status(400).json({ error: "Invalid product id in cart" });
       }
       if (!Number.isFinite(sellingPrice) || sellingPrice < 0) {
-        throw new Error("Invalid selling price in cart");
+        return res.status(400).json({ error: "Invalid selling price in cart" });
       }
       if (!Number.isInteger(quantity) || quantity <= 0) {
-        throw new Error("Invalid quantity in cart");
+        return res.status(400).json({ error: "Invalid quantity in cart" });
       }
 
+      normalizedItems.push({ productId, sellingPrice, quantity });
+      totalAmount += sellingPrice * quantity;
+    }
+
+    const due = Math.max(0, totalAmount - paid);
+
+    await client.query("BEGIN");
+
+    const orderInsert = await client.query(
+      `INSERT INTO orders
+   (user_id, customers_name, customers_phone, total_amount, amount_paid, amount_due)
+   VALUES ($1,$2,$3,$4,$5,$6)
+   RETURNING id`,
+      [
+        userId,
+        customersName || null,
+        customersPhone || null,
+        totalAmount,
+        paid,
+        due,
+      ],
+    );
+
+    const orderId = orderInsert.rows[0].id;
+    const processedItems = [];
+
+    for (const item of normalizedItems) {
+      const { productId, sellingPrice, quantity } = item;
       const productResult = await client.query(
         `SELECT id, buying_price, quantity
          FROM product_list
@@ -125,6 +154,9 @@ router.post("/",validate(salesSchema), async (req, res) => {
     res.status(201).json({
       message: "Order recorded",
       orderId,
+      totalAmount,
+      amountPaid: paid,
+      amountDue: due,
       items: processedItems,
     });
   } catch (err) {
@@ -151,6 +183,9 @@ router.get("/", async (req, res) => {
           oi.total_profit,
           o.customers_name,
           o.customers_phone,
+          o.total_amount,
+          o.amount_paid,
+          o.amount_due,
           o.created_at AS sold_at
         FROM order_items oi
         INNER JOIN orders o ON o.id = oi.order_id
@@ -177,6 +212,9 @@ router.get("/history", async (req, res) => {
           o.id AS order_id,
           o.customers_name,
           o.customers_phone,
+          o.total_amount,
+          o.amount_paid,
+          o.amount_due,
           o.created_at,
           COALESCE(SUM(oi.quantity), 0)::int AS total_products,
           COALESCE(SUM(oi.total_profit), 0)::numeric AS order_profit,
@@ -198,7 +236,7 @@ router.get("/history", async (req, res) => {
         LEFT JOIN order_items oi ON oi.order_id = o.id
         LEFT JOIN product_list p ON p.id = oi.product_id
         WHERE o.user_id = $1
-        GROUP BY o.id, o.customers_name, o.customers_phone, o.created_at
+        GROUP BY o.id, o.customers_name, o.customers_phone, o.total_amount, o.amount_paid, o.amount_due, o.created_at
         ORDER BY o.created_at DESC, o.id DESC
       `,
       [userId],

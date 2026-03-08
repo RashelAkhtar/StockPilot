@@ -22,6 +22,7 @@ function ProductSold() {
     productQty: "",
     customersName: "",
     customersPhone: "",
+    amountPaid: "",
   });
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -263,6 +264,15 @@ function ProductSold() {
       { units: 0, revenue: 0, profit: 0 },
     );
   }, [cart]);
+  const parsedAmountPaid = useMemo(() => {
+    const parsed = parseLooseNumber(form.amountPaid);
+    if (!Number.isFinite(parsed) || parsed < 0) return 0;
+    return parsed;
+  }, [form.amountPaid]);
+  const amountDue = useMemo(
+    () => Math.max(0, Number(cartTotals.revenue || 0) - parsedAmountPaid),
+    [cartTotals.revenue, parsedAmountPaid],
+  );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -278,9 +288,25 @@ function ProductSold() {
       return;
     }
 
+    const rawAmountPaid = String(form.amountPaid || "").trim();
+    const amountPaidInput = parseLooseNumber(form.amountPaid);
+    if (
+      rawAmountPaid.length > 0 &&
+      (!Number.isFinite(amountPaidInput) || amountPaidInput < 0)
+    ) {
+      setModal({
+        open: true,
+        title: "Warning",
+        message: "Please enter a valid non-negative amount paid",
+        variant: "error",
+      });
+      return;
+    }
+
     const payload = {
       customersName: form.customersName?.trim() || null,
       customersPhone: form.customersPhone?.trim() || null,
+      amountPaid: parsedAmountPaid,
       items: cart.map((item) => ({
         productId: Number(item.productId),
         sellingPrice: Number(item.sellingPrice),
@@ -341,6 +367,7 @@ function ProductSold() {
         productQty: "",
         customersName: "",
         customersPhone: "",
+        amountPaid: "",
       });
       setModal({
         open: true,
@@ -411,6 +438,26 @@ function ProductSold() {
                 onChange={handleChange}
                 value={form.customersPhone}
                 disabled={isSubmitting}
+              />
+
+              <label>Amount Paid</label>
+              <input
+                className="input"
+                type="text"
+                inputMode="decimal"
+                name="amountPaid"
+                placeholder="Enter paid amount..."
+                onChange={handleChange}
+                value={form.amountPaid}
+                disabled={isSubmitting}
+              />
+
+              <label>Amount Due</label>
+              <input
+                className="input"
+                type="text"
+                value={amountDue.toFixed(2)}
+                disabled
               />
             </div>
 

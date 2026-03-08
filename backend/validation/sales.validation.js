@@ -10,6 +10,7 @@ export const salesSchema = z
   .object({
     customersName: z.string().trim().optional(),
     customersPhone: z.string().trim().optional(),
+    amountPaid: z.union([z.string(), z.number()]).optional(),
     items: z.array(cartItemSchema).min(1, "At least one item required").optional(),
     productId: z.union([z.number(), z.string()]).optional(),
     sellingPrice: z.union([z.string(), z.number()]).optional(),
