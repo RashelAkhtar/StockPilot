@@ -1,0 +1,76 @@
+DROP TABLE IF EXISTS order_items;
+DROP TABLE IF EXISTS orders;
+DROP TABLE IF EXISTS product_list;
+DROP TABLE IF EXISTS refresh_tokens;
+DROP TABLE IF EXISTS users;
+
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE refresh_tokens (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token VARCHAR(255) UNIQUE NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE product_list (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    product_name TEXT NOT NULL,
+    buying_price NUMERIC NOT NULL,
+    quantity INTEGER NOT NULL,
+    total_sold INTEGER DEFAULT 0,
+    total_profit NUMERIC(14,2) DEFAULT 0,
+    last_sold_price NUMERIC(12,2),
+    added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE orders (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    customers_name TEXT,
+    customers_phone TEXT,
+    total_amount NUMERIC(14,2) DEFAULT 0,
+    amount_paid NUMERIC(14,2) DEFAULT 0,
+    amount_due NUMERIC(14,2) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE order_items (
+    id SERIAL PRIMARY KEY,
+    order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    product_id INTEGER NOT NULL REFERENCES product_list(id) ON DELETE CASCADE,
+    selling_price NUMERIC NOT NULL,
+    quantity INTEGER NOT NULL,
+    profit_per_unit NUMERIC NOT NULL,
+    total_profit NUMERIC NOT NULL
+);
+
+-- USERS
+CREATE INDEX idx_users_created_at ON users(created_at DESC);
+
+-- REFRESH TOKENS
+CREATE INDEX idx_refresh_tokens_user ON refresh_tokens(user_id);
+CREATE INDEX idx_refresh_tokens_expires ON refresh_tokens(expires_at);
+
+-- PRODUCTS
+CREATE INDEX idx_product_user ON product_list(user_id);
+CREATE INDEX idx_product_user_name ON product_list(user_id, product_name);
+CREATE INDEX idx_product_user_added ON product_list(user_id, added_at DESC);
+CREATE INDEX idx_product_low_stock ON product_list(user_id, quantity);
+
+-- ORDERS
+CREATE INDEX idx_orders_user ON orders(user_id);
+CREATE INDEX idx_orders_user_created ON orders(user_id, created_at DESC);
+CREATE INDEX idx_orders_customer_phone ON orders(customers_phone);
+
+-- ORDER ITEMS
+CREATE INDEX idx_order_items_order ON order_items(order_id);
+CREATE INDEX idx_order_items_product ON order_items(product_id);
