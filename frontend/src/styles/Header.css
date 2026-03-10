@@ -129,6 +129,19 @@
   transform: translateY(-2px);
 }
 
+.nav-actions .btn.logout {
+  background: #ef4444;
+  border-color: #ef4444;
+  color: #ffffff;
+}
+
+.nav-actions .btn.logout:hover {
+  background: #f81111;
+  border-color: #f81111;
+  color: #ffffff;
+  box-shadow: var(--shadow-md);
+}
+
 /* Remove primary class styling for nav buttons - make them all the same */
 .nav-actions .btn.primary {
   background: var(--bg-tertiary);

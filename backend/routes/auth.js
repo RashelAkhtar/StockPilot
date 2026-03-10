@@ -12,7 +12,8 @@ const router = express.Router();
 const cookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
-  sameSite: "strict",
+  sameSite: "none",
+  secure: true,
 };
 
 // generate access token (short-lived)

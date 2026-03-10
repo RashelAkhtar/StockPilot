@@ -121,7 +121,7 @@ export default function HomePage({ user }) {
 
         <div className="landing-hero-media">
           <img
-            src="https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&w=1400&q=80"
+            src="https://res.cloudinary.com/dsmszylhw/image/upload/v1773120977/ChatGPT_Image_Mar_10_2026_10_56_46_AM_gbshti.png"
             alt="Business team reviewing dashboard analytics"
           />
         </div>

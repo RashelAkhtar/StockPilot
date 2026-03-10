@@ -5,7 +5,7 @@ import "../styles/Header.css";
 
 function Header({ user, setUser }) {
   const navigate = useNavigate();
-  const API = import.meta.env.VITE_API || "http://localhost:3000";
+  const API = import.meta.env.VITE_API;
   const [lowStockItems, setLowStockItems] = useState([]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -106,7 +106,7 @@ function Header({ user, setUser }) {
               <NavLink to="/history" onClick={() => setMobileMenuOpen(false)} className={({ isActive }) => (isActive ? "btn active" : "btn")}>
                 History
               </NavLink>
-              <button className="btn" onClick={handleLogOut}>
+              <button className="btn logout" onClick={handleLogOut}>
                 Logout
               </button>
             </>

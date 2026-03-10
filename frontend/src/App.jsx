@@ -21,7 +21,7 @@ import "./styles/HistoryTable.css";
 axios.defaults.withCredentials = true;
 
 function App() {
-  const API = import.meta.env.VITE_API || "http://localhost:3000";
+  const API = import.meta.env.VITE_API;
   const [user, setUser] = useState(null);
   const [error] = useState("");
   const [loading, setLoading] = useState(true);
@@ -39,7 +39,7 @@ function App() {
             // Retry fetching user after refresh
             const retryRes = await axios.get(`${API}/api/auth/me`);
             setUser(retryRes.data);
-          } catch (refreshErr) {
+          } catch {
             setUser(null);
           }
         } else {

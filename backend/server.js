@@ -13,11 +13,12 @@ import authRouter from "./routes/auth.js";
 import { protect } from "./middleware/auth.js";
 
 // load .env located next to this file (backend/.env) so server works even when started from repo root
-const envPath = path.join(
-  path.dirname(new URL(import.meta.url).pathname),
-  ".env",
-);
-dotenv.config({ path: envPath });
+// const envPath = path.join(
+//   path.dirname(new URL(import.meta.url).pathname),
+//   ".env",
+// );
+// dotenv.config({ path: envPath });
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
